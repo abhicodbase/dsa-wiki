@@ -59,7 +59,7 @@ grid-layout
 - **Space Complexity:** $O(N^2)$ - For the 2D DP table.
 
 ## 3. Visual Concept
-![Longest Palindromic Substring Concept](file:///Users/abhishekkumar/.gemini/antigravity/brain/0f40a853-52de-42a5-ab51-d63bb350031c/longest_palindromic_substring_concept_1775358376332.png)
+![Longest Palindromic Substring Concept](./concept.png)
 
 ---
 
