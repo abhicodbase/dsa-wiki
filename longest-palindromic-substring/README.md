@@ -1,62 +1,56 @@
 # Longest Palindromic Substring - Explanation
 
-This document explains two common approaches to solve the "Longest Palindromic Substring" problem: **Recursion with Memoization** and **Dynamic Programming (Tabulation)**.
-
-## What is a Palindrome?
-A palindrome is a string that reads the same forward and backward. For example: `"aba"`, `"racecar"`, `"aa"`.
+This document explains common approaches to solve the "Longest Palindromic Substring" problem: **Brute Force Recursion** and **Dynamic Programming (Tabulation)**.
 
 ---
 
-## 1. Recursion with Memoization
+## 1. Brute Force Recursion
 
 ### The Core Idea
 To check if a string $s[i \dots j]$ is a palindrome:
-1. Check if the ends are the same: $s[i] == s[j]$.
-2. If yes, check if the middle part $s[i+1 \dots j-1]$ is also a palindrome.
+1. **Base Case:** If the `start` index meets or exceeds the `end` index, we have successfully validated the substring.
+2. **Recursive Step:** Compare $s[start]$ and $s[end]$. If they match, recursively check the inner substring $s[start+1 \dots end-1]$.
 
-### Why Memoization?
-Without memoization, we would solve the same subproblems many times. Memoization stores the result of `isPalindrome(i, j)` in a table so we only calculate it once for each $(i, j)$ pair.
+The function `longestPalindromeSubStr` explores all possible substrings by branches:
+- Shifting the start index forward: `(start + 1, end)`
+- Shifting the end index backward: `(start, end - 1)`
+
+### Complexity
+- **Time Complexity:** $O(2^N)$ - Without memoization, this implementation explores many overlapping subproblems repeatedly, leading to exponential time.
+- **Space Complexity:** $O(N)$ - Due to the maximum depth of the recursion stack.
 
 ### Logic Diagram
 ```mermaid
 graph TD
-    A["isPalindrome(i, j)"] --> B{"s[i] == s[j]?"}
+    A["isPalindrome(start, end)"] --> B{"s[start] == s[end]?"}
     B -- No --> C["Return False"]
-    B -- Yes --> D["Check isPalindrome(i+1, j-1)"]
-    D --> E["Store result in Memo Table"]
+    B -- Yes --> D["Check isPalindrome(start+1, end-1)"]
+    D --> E["Return Result"]
 ```
-
-### Complexity
-- **Time Complexity:** $O(N^2)$ - We check each substring once due to memoization.
-- **Space Complexity:** $O(N^2)$ - For the memoization table.
 
 ---
 
 ## 2. Dynamic Programming (Tabulation)
 
 ### The Core Idea
-Instead of starting from the large string and breaking it down (top-down), we start from the smallest possible palindromes (length 1 and 2) and build up to larger ones (bottom-up).
+Instead of breaking down the large string (top-down), we build up from the smallest possible palindromes (bottom-up).
 
 ### DP Table Definition
-Let `dp[i][j]` be a boolean value that is `true` if $s[i \dots j]$ is a palindrome.
+Let `dp[i][j]` be `true` if the substring $s[i \dots j]$ is a palindrome.
 
-1. **Base Case 1:** Every single character is a palindrome: `dp[i][i] = true`.
-2. **Base Case 2:** Two adjacent characters are a palindrome if they are identical: `dp[i][i+1] = (s[i] == s[i+1])`.
-3. **General Case:** For length $> 2$, $s[i \dots j]$ is a palindrome if $s[i] == s[j]$ **AND** the inner part `dp[i+1][j-1]` is true.
+1. **Length 1:** Every single character is a palindrome: `dp[i][i] = true`.
+2. **Length 2:** Two adjacent characters are a palindrome if they are identical: `dp[i][i+1] = (s[i] == s[i+1])`.
+3. **Length 3 to N:** For a substring of length $k$, $s[i \dots j]$ is a palindrome if $s[i] == s[j]$ **AND** the inner part `dp[i+1][j-1]` is already `true`.
 
-### Building the Table Diagram
-```mermaid
-grid-layout
-    | s[i] == s[j] | dp[i+1][j-1] | Result dp[i][j] |
-    |--------------|--------------|-----------------|
-    | Same         | True         | True            |
-    | Different    | Any          | False           |
-    | Same         | False        | False           |
-```
+### Algorithm Logic
+- We maintain `maxLength` and `startIndex` to track the best solution found so far.
+- We iterate through all possible lengths $k$ from 3 up to $N$.
 
 ### Complexity
-- **Time Complexity:** $O(N^2)$ - Two nested loops to fill the table.
+- **Time Complexity:** $O(N^2)$ - Two nested loops to fill the $N \times N$ DP table.
 - **Space Complexity:** $O(N^2)$ - For the 2D DP table.
+
+---
 
 ## 3. Visual Concept
 ![Longest Palindromic Substring Concept](./concept.png)
@@ -64,7 +58,7 @@ grid-layout
 ---
 
 ## 4. Learn More (External Resources)
-For a deeper analysis and video explanations, check out these excellent resources:
 - [NeetCode's Video Explanation](https://neetcode.io/problems/longest-palindromic-substring)
-- [LeetCode Editorial (Official)](https://leetcode.com/problems/longest-palindromic-substring/editorial/)
+- [LeetCode Editorial](https://leetcode.com/problems/longest-palindromic-substring/editorial/)
 - [GeeksforGeeks Article](https://www.geeksforgeeks.org/longest-palindromic-substring/)
+

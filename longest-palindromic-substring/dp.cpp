@@ -4,60 +4,63 @@
 
 using namespace std;
 
-class Solution {
-public:
-  string longestPalindrome(string s) {
-    int n = s.length();
-    if (n <= 1)
-      return s;
+// Function to find the longest palindromic substring
+string longestPalindrome(string s) {
+  int len = s.length(); // Length of the input string
+  int mx = 1;           // Stores maximum palindrome length (at least 1)
+  int startIndex = 0;   // Starting index of longest palindrome found
 
-    vector<vector<bool>> dp(n, vector<bool>(n, false));
-    int maxLen = 1;
-    int start = 0;
+  // DP table where dp[i][j] = true means substring s[i..j] is palindrome
+  vector<vector<bool>> dp(len, vector<bool>(len, false));
 
-    // All substrings of length 1 are palindromes
-    for (int i = 0; i < n; ++i) {
-      dp[i][i] = true;
-    }
-
-    // Check for substrings of length 2
-    for (int i = 0; i < n - 1; ++i) {
-      if (s[i] == s[i + 1]) {
-        dp[i][i + 1] = true;
-        start = i;
-        maxLen = 2;
-      }
-    }
-
-    // Check for lengths greater than 2
-    for (int len = 3; len <= n; ++len) {
-      for (int i = 0; i < n - len + 1; ++i) {
-        int j = i + len - 1;
-        if (s[i] == s[j] && dp[i + 1][j - 1]) {
-          dp[i][j] = true;
-          if (len > maxLen) {
-            start = i;
-            maxLen = len;
-          }
-        }
-      }
-    }
-
-    return s.substr(start, maxLen);
+  // Base case 1: All single characters are palindrome
+  for (int i = 0; i < len; i++) {
+    dp[i][i] = true;
   }
-};
+
+  // Base case 2: Check for substrings of length 2
+  for (int i = 0; i < len - 1; i++) {
+    if (s[i] == s[i + 1]) { // If both characters are same
+      dp[i][i + 1] = true;  // Mark as palindrome
+
+      // Update max length and starting index if needed
+      if (mx < 2) {
+        mx = 2;
+        startIndex = i;
+      }
+    }
+  }
+
+  // For substrings of length >= 3
+  // diff represents the gap between i and j (j - i)
+  for (int diff = 2; diff < len; diff++) {
+    for (int j = diff; j < len; j++) {
+      int i = j - diff; // Calculate starting index
+
+      // A substring is palindrome if:
+      // 1. Inner substring dp[i+1][j-1] is palindrome
+      // 2. Characters at both ends are equal
+      dp[i][j] = dp[i + 1][j - 1] && s[i] == s[j];
+
+      // If current substring is palindrome and longer than previous max
+      if (dp[i][j] && mx < j - i + 1) {
+        startIndex = i; // Update starting index
+        mx = j - i + 1; // Update max length
+      }
+    }
+  }
+
+  // Return the longest palindromic substring
+  return s.substr(startIndex, mx);
+}
 
 int main() {
-  Solution sol;
-  string s1 = "babad";
-  string s2 = "cbbd";
-  string s3 = "a";
-  string s4 = "ac";
+  string str = "abab"; // Input string
 
-  cout << "Input: " << s1 << " | Output: " << sol.longestPalindrome(s1) << endl;
-  cout << "Input: " << s2 << " | Output: " << sol.longestPalindrome(s2) << endl;
-  cout << "Input: " << s3 << " | Output: " << sol.longestPalindrome(s3) << endl;
-  cout << "Input: " << s4 << " | Output: " << sol.longestPalindrome(s4) << endl;
+  cout << "Input: " << str << endl;
+
+  // Call function and print result
+  cout << "Longest Palindromic Substring: " << longestPalindrome(str) << endl;
 
   return 0;
 }

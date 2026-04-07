@@ -1,61 +1,71 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
-#include <vector>
 
 using namespace std;
 
-class Solution {
-  vector<vector<int>> memo;
+/**
+ * @brief Helper function to check if a substring is a palindrome.
+ *
+ * Logic:
+ * - Base Case: If start exceeds or equals end, we've validated the entire
+ * substring.
+ * - Recursive Step: Compare the characters at `start` and `end`. If they match,
+ *   check the inner substring (start + 1, end - 1).
+ *
+ * @param str The input string.
+ * @param start Starting index of the substring.
+ * @param end Ending index of the substring.
+ * @return true if the substring is a palindrome, false otherwise.
+ */
+bool isPalindrome(const string &str, int start, int end) {
+  if (start >= end)
+    return true;
+  return (str[start] == str[end] && isPalindrome(str, start + 1, end - 1));
+}
 
-  bool isPalindrome(const string &s, int i, int j) {
-    if (i >= j)
-      return true;
-    if (memo[i][j] != -1)
-      return memo[i][j];
+/**
+ * @brief Recursively explores all substrings to find the longest palindrome.
+ *
+ * This function uses a "top-down" recursive approach:
+ * 1. Checks if the current range [start, end] forms a palindrome.
+ * 2. If it does, updates the maximum length found so far (`*mx`).
+ * 3. Recursively branches to check substrings by excluding the character at
+ *    the left (`start + 1`) and the right (`end - 1`).
+ *
+ * @note This implementation has exponential time complexity O(2^n) because it
+ *       recalculates many overlapping substrings.
+ *
+ * @param str The input string.
+ * @param start Current starting index.
+ * @param end Current ending index.
+ * @param mx Pointer to the variable storing the maximum length found.
+ */
+void longestPalindromeSubStr(const string &str, int start, int end, int *mx) {
+  // Base Case: Stop if the range becomes invalid
+  if (start > end)
+    return;
 
-    if (s[i] == s[j]) {
-      return memo[i][j] = isPalindrome(s, i + 1, j - 1);
-    }
-    return memo[i][j] = 0;
+  // Check if the current substring [start, end] is a palindrome
+  // We update 'mx' if a longer palindrome is found.
+  if (isPalindrome(str, start, end)) {
+    *mx = max(*mx, end - start + 1);
   }
 
-public:
-  string longestPalindrome(string s) {
-    int n = s.length();
-    if (n <= 1)
-      return s;
-
-    memo.assign(n, vector<int>(n, -1));
-
-    int maxLen = 0;
-    int start = 0;
-
-    for (int i = 0; i < n; ++i) {
-      for (int j = i; j < n; ++j) {
-        if (isPalindrome(s, i, j)) {
-          if (j - i + 1 > maxLen) {
-            maxLen = j - i + 1;
-            start = i;
-          }
-        }
-      }
-    }
-
-    return s.substr(start, maxLen);
-  }
-};
+  // Branching: Explore smaller substrings by shrinking the range from both ends
+  longestPalindromeSubStr(str, start + 1, end, mx);
+  longestPalindromeSubStr(str, start, end - 1, mx);
+}
 
 int main() {
-  Solution sol;
-  string s1 = "babad";
-  string s2 = "cbbd";
-  string s3 = "a";
-  string s4 = "ac";
+  string str = "abba";
+  int mx = 0;
 
-  cout << "Input: " << s1 << " | Output: " << sol.longestPalindrome(s1) << endl;
-  cout << "Input: " << s2 << " | Output: " << sol.longestPalindrome(s2) << endl;
-  cout << "Input: " << s3 << " | Output: " << sol.longestPalindrome(s3) << endl;
-  cout << "Input: " << s4 << " | Output: " << sol.longestPalindrome(s4) << endl;
+  if (!str.empty()) {
+    // Initial call with the full range of the string
+    longestPalindromeSubStr(str, 0, str.length() - 1, &mx);
+  }
 
+  cout << "longest substring Palindrome length " << mx << "\n";
   return 0;
 }
