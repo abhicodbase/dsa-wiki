@@ -52,7 +52,14 @@ Let `dp[i][j]` be `true` if the substring $s[i \dots j]$ is a palindrome.
 
 ---
 
-## 3. Visual Concept
+## 3. Logical Breakdown
+The following diagram illustrates the recursive branching and the DP table filling logic for finding the longest palindromic substring.
+
+![Logical Breakdown](./logical_breakdown.png)
+
+---
+
+## 4. Visual Concept
 ![Longest Palindromic Substring Concept](./concept.png)
 
 ---
