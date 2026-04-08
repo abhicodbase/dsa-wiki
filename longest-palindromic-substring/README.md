@@ -59,11 +59,6 @@ The following diagram illustrates the recursive branching and the DP table filli
 
 ---
 
-## 4. Visual Concept
-![Longest Palindromic Substring Concept](./concept.png)
-
----
-
 ## 4. Learn More (External Resources)
 - [NeetCode's Video Explanation](https://neetcode.io/problems/longest-palindromic-substring)
 - [LeetCode Editorial](https://leetcode.com/problems/longest-palindromic-substring/editorial/)
