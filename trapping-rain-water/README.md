@@ -1,4 +1,11 @@
-# Trapping Rain Water - Explanation
+# Trapping Rain Water
+
+- **Difficulty:** Hard
+- **Categories:** Array, DP, Two Pointers
+- **Time Complexity:** O(N)
+- **Space Complexity:** O(N)
+
+---
 
 Given $n$ non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.
 
