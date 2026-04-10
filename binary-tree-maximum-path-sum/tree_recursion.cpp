@@ -1,3 +1,8 @@
+#include <algorithm>
+#include <iostream>
+
+using namespace std;
+
 /**
  * Definition for a binary tree node.
  * struct TreeNode {
@@ -18,7 +23,7 @@ public:
    */
   int maxSum(TreeNode *node, int *mx) {
     // Base case: if node is null, contribution is 0
-    if (node == NULL) {
+    if (node == nullptr) {
       return 0;
     }
 
