@@ -15,6 +15,28 @@ Given the `root` of a binary tree, return the maximum path sum of any non-empty 
 
 ---
 
+### Examples
+
+**Example 1:**
+![Example 1](https://assets.leetcode.com/uploads/2020/10/13/ex1.jpg)
+- **Input:** `root = [1,2,3]`
+- **Output:** `6`
+- **Explanation:** The optimal path is `2 -> 1 -> 3` with a path sum of `2 + 1 + 3 = 6`.
+
+**Example 2:**
+![Example 2](https://assets.leetcode.com/uploads/2020/10/13/ex2.jpg)
+- **Input:** `root = [-10,9,20,null,null,15,7]`
+- **Output:** `42`
+- **Explanation:** The optimal path is `15 -> 20 -> 7` with a path sum of `15 + 20 + 7 = 42`.
+
+---
+
+### Constraints
+- The number of nodes in the tree is in the range `[1, 3 * 10^4]`.
+- `-1000 <= Node.val <= 1000`
+
+---
+
 ## Logic Explanation
 
 The core insight is that for any node, the maximum path passing through it can be one of:
