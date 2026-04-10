@@ -36,8 +36,7 @@ public:
     // right child.
     int currentNodeMaxVal = -100000;
     // Extend path through either branch, or just take the node value
-    currentNodeMaxVal =
-        max(currentNodeMaxVal, max(leftChildMax, rightChildMax) + node->val);
+    currentNodeMaxVal = max(currentNodeMaxVal, max(leftChildMax, rightChildMax) + node->val);
     currentNodeMaxVal = max(currentNodeMaxVal, node->val);
 
     // Update the global maximum (mx)
