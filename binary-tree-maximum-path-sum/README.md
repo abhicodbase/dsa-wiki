@@ -18,13 +18,27 @@ Given the `root` of a binary tree, return the maximum path sum of any non-empty 
 ### Examples
 
 **Example 1:**
-![Example 1](https://assets.leetcode.com/uploads/2020/10/13/ex1.jpg)
+
+```mermaid
+graph TD
+    1((1)) --- 2((2))
+    1 --- 3((3))
+```
+
 - **Input:** `root = [1,2,3]`
 - **Output:** `6`
 - **Explanation:** The optimal path is `2 -> 1 -> 3` with a path sum of `2 + 1 + 3 = 6`.
 
 **Example 2:**
-![Example 2](https://assets.leetcode.com/uploads/2020/10/13/ex2.jpg)
+
+```mermaid
+graph TD
+    -10(("-10")) --- 9((9))
+    -10 --- 20((20))
+    20 --- 15((15))
+    20 --- 7((7))
+```
+
 - **Input:** `root = [-10,9,20,null,null,15,7]`
 - **Output:** `42`
 - **Explanation:** The optimal path is `15 -> 20 -> 7` with a path sum of `15 + 20 + 7 = 42`.
@@ -49,6 +63,8 @@ The core insight is that for any node, the maximum path passing through it can b
 We use a recursive helper function `maxSum` that returns the maximum path starting from a node and going down into one of its children's subtrees. This value can be extended to the node's parent.
 
 While calculating this, we also update a global maximum `mx` to account for paths that might arc through the current node (left + node + right).
+
+![Logic Diagram](./logic-diagram.png)
 
 ### Complexity
 - **Time Complexity:** $O(N)$ where $N$ is the number of nodes, as we visit each node exactly once.
