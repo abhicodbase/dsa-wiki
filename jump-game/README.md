@@ -2,7 +2,7 @@
 
 You are given an integer array `nums`. You are initially positioned at the array's first index, and each element in the array represents your maximum jump length at that position. Determine if you are able to reach the last index.
 
-![Concept Diagram](concept.png)
+![Concept Diagram](./concept.png)
 
 ## Approaches
 
