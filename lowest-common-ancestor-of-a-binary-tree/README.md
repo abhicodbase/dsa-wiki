@@ -2,6 +2,8 @@
 
 Given a binary tree, find the lowest common ancestor (LCA) of two given nodes, p and q.
 
+![Concept Diagram](./concept.png)
+
 ### Complexity
 - **Time Complexity**: O(n)
 - **Space Complexity**: O(h)
