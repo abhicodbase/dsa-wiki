@@ -13,6 +13,8 @@ Find if there exists a 132 pattern (nums[i] < nums[k] < nums[j], i < j < k).
 
 ## Approach: Monotonic Stack + Track Min
 
+![132 Pattern Concept](concept.png)
+
 Traverse right to left. Maintain a stack and a 'third' value (the '2' in 132). Pop elements smaller than current onto 'third'. If current < 'third', 132 pattern found.
 
 ---
