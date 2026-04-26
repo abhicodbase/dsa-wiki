@@ -33,6 +33,16 @@ Standard BFS starting from the source node. Instead of storing just nodes, the q
 - [NeetCode](https://neetcode.io/problems/all-paths-from-source-to-target)
 - [LeetCode](https://leetcode.com/problems/all-paths-from-source-to-target/)
 
+---
+
+## Related Interview Questions
+- [Path Sum II](../path-sum-ii/README.md)
+- [Binary Tree Paths](../binary-tree-paths/README.md)
+- [Word Search](../word-search/README.md)
+- [Find Eventual Safe States](../find-eventual-safe-states/README.md)
+
+---
+
 # Time & Space Complexity Summary
  
 ## All Paths From Source to Target (LeetCode 797)

@@ -1,8 +1,25 @@
-# Number of Islands - Explanation
+# Number of Islands
+
+- **Difficulty:** Medium
+- **Categories:** Array, Depth-First Search, Breadth-First Search, Union Find, Matrix
+
+---
+
+## Complexity Analysis
+
+- **Time Complexity:** $O(M \times N)$
+  - We iterate through every cell in the $M \times N$ grid exactly once.
+  - Each cell containing '1' is visited during a DFS/BFS traversal and marked as '0', ensuring it's not processed again.
+- **Space Complexity:** $O(M \times N)$
+  - In the worst case (e.g., all '1's), the recursion stack for DFS or the queue for BFS can grow to $O(M \times N)$.
+
+---
 
 Given an $m \times n$ 2D binary grid which represents a map of '1's (land) and '0's (water), return the number of islands.
 
 An island is surrounded by water and is formed by connecting adjacent lands horizontally or vertically.
+
+---
 
 ## Approach: Grid Traversal (DFS/BFS)
 
@@ -24,14 +41,20 @@ graph TD
     Right --> Visit
 ```
 
-### Complexity
-## 3. Visual Concept
+### Visual Concept
 ![Number of Islands Concept](./concept.png)
 
 ---
 
-## 4. Learn More (External Resources)
-For a deeper analysis and video explanations, check out these excellent resources:
-- [NeetCode's Video Explanation](https://neetcode.io/problems/number-of-islands)
-- [AlgoMonster Explanation](https://algo.monster/problems/num_islands)
-- [GeeksforGeeks Article](https://www.geeksforgeeks.org/find-number-of-islands/)
+## Related Interview Questions
+- [Max Area of Island](../max-area-of-island/README.md)
+- [Number of Closed Islands](../number-of-closed-islands/README.md)
+- [Flood Fill](../flood-fill/README.md)
+- [Count Sub Islands](../count-sub-islands/README.md)
+
+---
+
+## Learn More
+- [NeetCode](https://neetcode.io/problems/number-of-islands)
+- [LeetCode](https://leetcode.com/problems/number-of-islands/)
+- [AlgoMonster](https://algo.monster/problems/num_islands)
