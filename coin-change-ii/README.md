@@ -9,6 +9,8 @@
 
 Return the number of combinations (not permutations) that make up the amount using given coin denominations.
 
+![Concept](concept.png)
+
 ---
 
 ## Approach: Unbounded Knapsack (Combinations)
