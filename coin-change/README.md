@@ -9,3 +9,6 @@ Given an array of coin denominations `coins` and a total amount `amount`, return
 ---
 ### Approach
 Use bottom-up Dynamic Programming. Build a `dp` array of size `amount + 1` initialized to infinity. Set `dp[0] = 0`. For each amount from 1 to `amount`, try every coin denomination and update `dp[i] = min(dp[i], dp[i - coin] + 1)`. Return `dp[amount]` if it's not infinity, else `-1`.
+
+![Coin Change DP Concept](./concept.png)
+*Visual representation of the dynamic programming approach, showing how smaller amounts build up to solve the total amount using the given coin denominations.*
