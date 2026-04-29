@@ -2,18 +2,38 @@
 
 - **Difficulty:** Easy
 - **Categories:** String, Trie
-- **Time Complexity:** O(S)
-- **Space Complexity:** O(1)
+
+---
+
+## Complexity Analysis
+
+- **Time Complexity:** $O(S)$
+  - Building the Trie takes $O(S)$ time, where $S$ is the sum of all characters in all strings.
+  - Finding the longest common prefix takes at most $O(M)$ time, where $M$ is the length of the longest common prefix. Therefore, the overall time complexity is $O(S)$.
+- **Space Complexity:** $O(S)$
+  - In the worst case, if all strings have no common prefix, the Trie will need to store all $S$ characters, taking $O(S)$ space.
 
 ---
 
 Find the longest common prefix string among an array of strings.
 
+![Concept](concept.png)
+
 ---
 
-## Approach: Vertical Scanning
+## Approach: Trie
 
-Take the first string. For each character position, check if all strings share that character at that position. Stop when a mismatch is found or a string ends.
+1. Insert all strings into a Trie data structure.
+2. Traverse down the Trie starting from the root.
+3. The common prefix stops when we reach a node that either has more than one child (meaning the strings diverge) or marks the end of a word (meaning one of the strings ends there).
+
+---
+
+## Related Interview Questions
+- [Implement Trie (Prefix Tree)](../implement-trie-prefix-tree/README.md)
+- [Design Search Autocomplete System](../design-search-autocomplete-system/README.md)
+- [Replace Words](../replace-words/README.md)
+- [Word Search II](../word-search-ii/README.md)
 
 ---
 
