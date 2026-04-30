@@ -2,8 +2,16 @@
 
 - **Difficulty:** Medium
 - **Categories:** Array, Hash Table, Sliding Window, Prefix Sum
-- **Time Complexity:** O(N)
-- **Space Complexity:** O(N)
+
+---
+
+## Complexity Analysis
+
+- **Time Complexity:** $O(N)$
+  - We iterate through the array of length $N$ exactly once.
+  - Insertions and lookups in the unordered hash map take $O(1)$ time on average.
+- **Space Complexity:** $O(N)$
+  - In the worst case, all prefix sums are distinct, meaning the hash map will store up to $N + 1$ unique keys.
 
 ---
 
@@ -13,7 +21,15 @@ Given a binary array and a goal, return the number of non-empty subarrays with s
 
 ## Approach: Prefix Sum + Hash Map
 
-Maintain prefix sum frequency map. For each index, add freq[prefixSum - goal] to count. Same pattern as Subarray Sum Equals K.
+Maintain a prefix sum frequency map. For each index, calculate the current prefix sum. Then, look up if `prefixSum - goal` exists in the map and add its frequency to the total count. This works because if `prefix[j] - prefix[i] == goal`, then the sum of elements between index `i+1` and `j` is exactly `goal`.
+
+---
+
+## Related Interview Questions
+- [Subarray Sum Equals K](../subarray-sum-equals-k/README.md)
+- [Continuous Subarray Sum](../continuous-subarray-sum/README.md)
+- [Contiguous Array](../contiguous-array/README.md)
+- [Subarrays with K Different Integers](../subarrays-with-k-different-integers/README.md)
 
 ---
 
