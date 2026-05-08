@@ -32,6 +32,44 @@ graph LR
 
 ---
 
+## Common Pitfalls and Optimizations
+
+When implementing BFS for the Word Ladder problem, several subtle issues can impact performance and correctness:
+
+### 1. Missing `beginWord` in Visited Set
+**Problem:** Not marking `beginWord` as visited initially can cause issues if it appears in `wordList` or if there's a cycle back to it.
+**Fix:** Explicitly mark it before starting the BFS loop.
+```cpp
+q.push({beginWord, 1});
+visited[beginWord] = true;  // Mark it as visited
+```
+
+### 2. Inefficient Access with `std::map::operator[]`
+**Problem:** Using `wordDist[tmpStr]` evaluates to `false` if `tmpStr` doesn't exist, but it *also* creates a new entry in the map. During string permutation, this can insert thousands of invalid strings, causing Memory Limit Exceeded (MLE) or Time Limit Exceeded (TLE).
+**Fix:** Use `.count()` or `.find()` to check existence without modifying the map.
+```cpp
+if(wordDist.count(tmpStr) && !visited[tmpStr]) {
+    // count() doesn't create entries
+}
+```
+
+### 3. Unnecessary Iterator Loops
+**Problem:** Using verbose, old-style iterator loops to populate a set or map makes code harder to read.
+**Fix:** Use range-based for loops, or even better, initialize an `unordered_set` directly from the vector's iterators.
+```cpp
+// Instead of verbose iterators:
+unordered_set<string> wordSet(wordList.begin(), wordList.end());
+```
+
+### 4. Using `unordered_map<string, bool>` for Visited Elements
+**Problem:** Maps with boolean values are wasteful (8 bytes per entry overhead). 
+**Fix:** Use `unordered_set<string>` instead for $O(1)$ lookup and $0$ value overhead.
+```cpp
+unordered_set<string> visited;  // More efficient than map<string, bool>
+```
+
+---
+
 ## 3. Visual Concept
 ![Word Ladder Concept](./concept.png)
 
