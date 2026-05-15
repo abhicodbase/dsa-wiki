@@ -24,16 +24,16 @@ The solution uses a recursive state machine to explore potential transactions. I
 
 ```mermaid
 graph TD
-    Start((Start)) --> S1[Not Holding Stock]
+    Start((Start)) --> S1["Not Holding Stock"]
     
-    S1 -- "Buy today" --> S2[Holding Stock]
-    S1 -- "Skip today" --> S1_Next[Not Holding Stock (index+1)]
+    S1 -- "Buy today" --> S2["Holding Stock"]
+    S1 -- "Skip today" --> S1_Next["Not Holding Stock (index+1)"]
     
-    S2 -- "Price Rising" --> S2_Next[Holding Stock (index+1, profit + diff)]
+    S2 -- "Price Rising" --> S2_Next["Holding Stock (index+1, profit + diff)"]
     S2 -- "Price Falling" --> Choice{Choice}
     
-    Choice -- "Sell" --> S1_Sell[Not Holding Stock (count+1)]
-    Choice -- "Hold" --> S2_Hold[Holding Stock (index+1, profit - diff)]
+    Choice -- "Sell" --> S1_Sell["Not Holding Stock (count+1)"]
+    Choice -- "Hold" --> S2_Hold["Holding Stock (index+1, profit - diff)"]
     
     S1_Sell --> S1
     S1_Next --> S1
