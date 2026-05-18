@@ -74,3 +74,7 @@ For a deeper analysis and video explanations, check out these excellent resource
 The code dependencies and full implementations for these approaches can be found here:
 - **Binary Search (O(log(min(M, N))))**: [`binary_search_iterative.cpp`](./binary_search_iterative.cpp)
 - **Two Pointers (O(M+N))**: [`two-pointer.cpp`](./two-pointer.cpp)
+
+
+Video Ref - 
+https://www.youtube.com/watch?v=LPFhl65R7ww&t=234s
