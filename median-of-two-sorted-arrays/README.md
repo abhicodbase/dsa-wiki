@@ -67,3 +67,10 @@ For a deeper analysis and video explanations, check out these excellent resource
 - [NeetCode's Video Explanation](https://neetcode.io/problems/median-of-two-sorted-arrays)
 - [TakeUForward (Striver's) Article](https://takeuforward.org/data-structure/median-of-two-sorted-arrays-of-different-sizes/)
 - [LeetCode Editorial (Official)](https://leetcode.com/problems/median-of-two-sorted-arrays/editorial/)
+
+---
+
+## Implementations
+The code dependencies and full implementations for these approaches can be found here:
+- **Binary Search (O(log(min(M, N))))**: [`binary_search_iterative.cpp`](./binary_search_iterative.cpp)
+- **Two Pointers (O(M+N))**: [`two-pointer.cpp`](./two-pointer.cpp)
