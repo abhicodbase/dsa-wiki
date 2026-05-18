@@ -30,9 +30,39 @@ Since the arrays are sorted, we can binary search for the correct partition inde
 ## 3. Visual Concept
 ![Median of Two Sorted Arrays Concept](./concept.png)
 
+## Approach 2: Two Pointers (Merge Step of Merge Sort)
+
+### The Core Idea
+Instead of binary search, we can use a simpler approach based on the merge step of the Merge Sort algorithm. Since both arrays are already sorted, we can use two pointers (one for each array) to traverse them and build a single merged sorted array.
+
+### Visual Diagram (Two Pointers)
+```mermaid
+graph TD
+    subgraph Array 1
+        A[1] --- B[3]
+        A_Ptr["Pointer 1"] -.-> A
+    end
+    
+    subgraph Array 2
+        C[2] --- D[4] --- E[5]
+        C_Ptr["Pointer 2"] -.-> C
+    end
+    
+    subgraph Merged Array
+        M1[1] --- M2[2] --- M3[3] --- M4[4] --- M5[5]
+        style M3 fill:#3b82f6,color:#fff
+    end
+    
+    A & C --> M1
+```
+
+Once merged, if the total length is odd, the median is the middle element. If even, the median is the average of the two middle elements. 
+**Time Complexity:** O(M + N) where M and N are the sizes of the two arrays.
+**Space Complexity:** O(M + N) to store the merged array.
+
 ---
 
-## 4. Learn More (External Resources)
+## Learn More (External Resources)
 For a deeper analysis and video explanations, check out these excellent resources:
 - [NeetCode's Video Explanation](https://neetcode.io/problems/median-of-two-sorted-arrays)
 - [TakeUForward (Striver's) Article](https://takeuforward.org/data-structure/median-of-two-sorted-arrays-of-different-sizes/)
