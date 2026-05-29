@@ -40,6 +40,27 @@ The recursive tree contains many overlapping subproblems where we evaluate the s
 
 ---
 
+### Approach 3: Optimized 2D Top-Down Dynamic Programming (State Reduction)
+Instead of tracking the state using three variables `(idx, buy, txn)` in a 3D DP table, we can optimize the representation by observing that completing `k` transactions requires at most `2 * k` individual operations (alternating between BUY and SELL). 
+
+We can track the current state using a single operation index `op` (from `0` to `2 * k - 1`), reducing the DP table to a 2D array `dp[idx][op]`.
+
+#### DP State Transitions:
+1. **Even Operation State: Looking to Buy (`op % 2 == 0`)**
+   ```cpp
+   dp[idx][op] = max(-prices[idx] + transactions(k, op + 1, prices, idx + 1, dp), transactions(k, op, prices, idx + 1, dp));
+   ```
+2. **Odd Operation State: Looking to Sell (`op % 2 != 0`)**
+   ```cpp
+   dp[idx][op] = max(prices[idx] + transactions(k, op + 1, prices, idx + 1, dp), transactions(k, op, prices, idx + 1, dp));
+   ```
+
+*Complexity:*
+- **Time Complexity:** `O(N * K)` where `N` is the number of days and `K` is the transaction limit. There are at most `N * 2 * K` states.
+- **Space Complexity:** `O(N * K)` auxiliary space to store memoized results in our 2D `dp` table, which consumes less space and has less memory overhead than a 3D table.
+
+---
+
 ## DP State Machine Concept
 
 ```mermaid
