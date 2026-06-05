@@ -48,9 +48,11 @@ Instead, we perform a **BFS on Bus Routes (Buses)**.
 
 ---
 
-## Visualizing Transitions (Based on [concept.png](./concept.png))
+## Visualizing Transitions (Based on ![Concept Diagram](./concept.png))
 
-Let's look at the two cases of route transitions described in `concept.png` to travel from **Source (1)** to **Target (7)**.
+Let's look at the two cases of route transitions described in the diagram below to travel from **Source (1)** to **Target (7)**.
+
+![Concept Diagram](./concept.png)
 
 ```mermaid
 graph TD
