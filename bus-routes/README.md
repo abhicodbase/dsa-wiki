@@ -48,7 +48,7 @@ Instead, we perform a **BFS on Bus Routes (Buses)**.
 
 ---
 
-## Visualizing Transitions (Based on [concept.png](file:///Users/abhishekkumar/.gemini/antigravity/scratch/coding/dsa-wiki/bus-routes/concept.png))
+## Visualizing Transitions (Based on [concept.png](./concept.png))
 
 Let's look at the two cases of route transitions described in `concept.png` to travel from **Source (1)** to **Target (7)**.
 
@@ -124,9 +124,12 @@ graph TD
 
 ## Implementation
 
-The solution is implemented using an optimized level-by-level BFS in C++.
+Multiple BFS implementations are available:
 
-See the full implementation here: [bfs_bus_routes.cpp](file:///Users/abhishekkumar/.gemini/antigravity/scratch/coding/dsa-wiki/bus-routes/bfs_bus_routes.cpp).
+1. **Optimized level-by-level BFS (Recommended)**: Utilizes `std::unordered_map`, flat `std::vector<bool>` for route tracking, and early termination.
+   - See the implementation here: [bfs_bus_routes.cpp](file:///Users/abhishekkumar/.gemini/antigravity/scratch/coding/dsa-wiki/bus-routes/bfs_bus_routes.cpp).
+2. **Alternative queue-of-pairs BFS**: Utilizes `std::map` for stop/route tracking and a queue of `pair<stop, bus_count>`.
+   - See the implementation here: [map_bfs.cpp](file:///Users/abhishekkumar/.gemini/antigravity/scratch/coding/dsa-wiki/bus-routes/map_bfs.cpp).
 
 ---
 
