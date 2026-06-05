@@ -14,8 +14,7 @@ Given `n` cities numbered from `0` to `n-1`, a list of flights where each flight
 ---
 
 ## Visual Overview
-
-![Concept Diagram](file:///Users/abhishekkumar/.gemini/antigravity-ide/brain/a7f75203-e2ea-478d-8fe4-ab10aae0b004/flight_concept_1780677690869.png)
+![Concept Diagram](./flight_concept_1780677690869.png)
 
 The diagram illustrates several cities (nodes) connected by directed flights (edges) with associated costs. The goal is to find the cheapest path from the source to the destination while traversing no more than `k` intermediate stops.
 
