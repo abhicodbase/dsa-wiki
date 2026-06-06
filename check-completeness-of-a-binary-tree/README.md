@@ -1,22 +1,63 @@
 # Check Completeness of a Binary Tree
 
 - **Difficulty:** Medium
-- **Categories:** Tree, Breadth-First Search, Binary Tree
-- **Time Complexity:** O(N)
-- **Space Complexity:** O(N)
+- **Categories:** Tree, BFS, Binary Tree, Complete Binary Tree
+- **Time Complexity:** `O(N)` – each node is visited once during BFS.
+- **Space Complexity:** `O(N)` – queue stores at most one level of the tree.
 
 ---
 
-Given the root of a binary tree, determine if it is a complete binary tree.
+## Problem Statement
+Given the `root` of a binary tree, determine if it is a **complete binary tree**.
+
+A complete binary tree satisfies:
+1. All levels are completely filled except possibly the last level.
+2. In the last level, all nodes are as far left as possible.
+
+Return `true` if the tree is complete, otherwise `false`.
 
 ---
 
-## Approach: BFS with Null Flag
+## Solution Overview
+We perform a breadth‑first traversal (BFS) using a queue:
+1. Enqueue the root.
+2. While processing nodes, once a `nullptr` child is encountered we set a flag `isNullSeen`.
+3. After the flag is set, any subsequent non‑null node indicates the tree is not complete → return `false`.
+4. If the loop finishes without violation, the tree is complete.
 
-BFS the tree. Once a null node is encountered, all subsequent nodes must also be null. If a non-null node appears after a null, it's not complete.
+The algorithm works because a complete binary tree, when scanned level‑order, will have all `nullptr` children grouped at the end.
+
+---
+
+## Complexity Analysis
+| Metric | Complexity |
+|--------|------------|
+| Time   | `O(N)` – each node visited once |
+| Space  | `O(N)` – queue may hold up to one full level |
+
+---
+
+## Usage Example (C++)
+```cpp
+#include "bfs.cpp" // contains the Solution class
+
+int main() {
+    TreeNode* root = new TreeNode(1,
+                      new TreeNode(2,
+                          new TreeNode(4),
+                          new TreeNode(5)),
+                      new TreeNode(3,
+                          new TreeNode(6),
+                          nullptr));
+    Solution sol;
+    bool ok = sol.isCompleteTree(root);
+    cout << (ok ? "Complete" : "Not complete") << endl; // Expected: Complete
+    return 0;
+}
+```
 
 ---
 
 ## Learn More
-- [NeetCode](https://neetcode.io/problems/check-completeness-of-a-binary-tree)
-- [LeetCode](https://leetcode.com/problems/check-completeness-of-a-binary-tree/)
+- [LeetCode – Check Completeness of a Binary Tree](https://leetcode.com/problems/check-completeness-of-a-binary-tree/)
+- [Discussion & Editorial](https://leetcode.com/problems/check-completeness-of-a-binary-tree/discuss/)
