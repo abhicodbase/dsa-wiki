@@ -1,0 +1,565 @@
+<!--
+  find_k_closest_binary_search.html
+  ─────────────────────────────────
+  Interactive step-by-step SVG visualization for LeetCode #658
+  "Find K Closest Elements" — Binary Search on Window Left Index approach.
+
+  ALGORITHM RECAP
+  ───────────────
+  Given sorted arr, k, x:
+    • The answer is always a contiguous window of size k.
+    • Binary search for the best starting index `lo` in [0, n−k].
+    • At each mid: compare distances of arr[mid] and arr[mid+k] from x.
+      - If x − arr[mid] > arr[mid+k] − x  →  window is too far left  → lo = mid+1
+      - Else                               →  window is OK or too far right → hi = mid
+    • Return arr[lo .. lo+k-1].
+
+  VISUALIZATION ELEMENTS
+  ───────────────────────
+  • Array cells drawn as SVG <rect> with values and index labels
+  • Green rectangle  — current k-element window candidate
+  • Yellow highlight — current mid cell
+  • Blue arrow (lo), Red arrow (hi), Orange arrow (mid) — pointer labels
+  • Dashed arcs      — left distance (x−arr[mid]) and right distance (arr[mid+k]−x)
+  • Comparison box   — shows both distances and the resulting decision
+  • x dashed line    — marks the target value position in the array
+  • Green result     — final answer cells highlighted on convergence
+
+  EMBEDDING
+  ─────────
+  This file is designed to be embedded in the dsa-wiki viewer.
+  It uses CSS variables defined by the host page (--color-*, --font-*).
+-->
+
+<style>
+  /* ── Container & typography ───────────────────────────────────── */
+  #root { padding: 1rem 0; font-family: var(--font-sans); }
+
+  /* Secondary label text (captions, metadata) */
+  .label { font-size: 13px; color: var(--color-text-secondary); }
+
+  /* Monospace chip — used for displaying code-like values */
+  .code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    padding: 4px 10px;
+    display: inline-block;
+  }
+
+  /* Navigation buttons (Prev / Next / Reset) */
+  .step-btn {
+    padding: 6px 18px;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .step-btn:hover    { background: var(--color-background-secondary); }
+  .step-btn:disabled { opacity: 0.35; cursor: default; }
+
+  /* Step explanation message below the SVG */
+  .msg { font-size: 13px; color: var(--color-text-secondary); min-height: 1.5em; margin-top: 4px; }
+
+  /* Generic badge/tag chip */
+  .tag { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+</style>
+
+<div id="root">
+  <!-- Accessible heading (screen-reader only) -->
+  <h2 class="sr-only">Interactive binary search visualization for Find K Closest Elements</h2>
+
+  <!--
+    ── SVG Canvas ────────────────────────────────────────────────────
+    Fixed viewBox 680×360. All positions are calculated in JS using
+    cell width (CW=60) and gap (GAP=6), centered horizontally.
+  -->
+  <svg width="100%" viewBox="0 0 680 360" role="img">
+    <title>Binary search window visualization</title>
+    <desc>Step through how binary search finds the optimal window of k elements closest to x</desc>
+
+    <defs>
+      <!--
+        Arrowhead marker used on lo / hi / mid pointer lines.
+        "context-stroke" inherits the line's stroke color automatically.
+      -->
+      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5"
+              markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke"
+              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+
+    <!-- ── Array grid ─────────────────────────────────────────── -->
+    <!-- <rect> cells and their value/index labels are injected by JS -->
+    <g id="cells"></g>       <!-- cell backgrounds (rect elements) -->
+    <g id="val-labels"></g>  <!-- cell value text (e.g. "1", "2", …) -->
+    <g id="idx-labels"></g>  <!-- index text below each cell (0, 1, 2, …) -->
+
+    <!--
+      Green window rectangle — outlines the current k-element candidate window.
+      Starts hidden (opacity=0); JS positions and shows it after step 0.
+    -->
+    <rect id="win-rect" y="52" height="52" rx="6"
+          fill="none" stroke="#1D9E75" stroke-width="2" opacity="0"/>
+
+    <!--
+      Yellow highlight overlay on the current mid cell.
+      Drawn with 45% opacity so the cell value is still readable.
+    -->
+    <rect id="mid-rect" y="52" height="52" rx="4" opacity="0"/>
+
+    <!--
+      ── lo pointer (blue, above the array) ──────────────────────
+      Points downward onto the lo cell from above.
+    -->
+    <g id="ptr-lo" opacity="0">
+      <line id="lo-line" stroke="#3B8BD4" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text class="t" id="lo-text" text-anchor="middle" font-size="13"
+            fill="#185FA5" font-weight="500">lo</text>
+    </g>
+
+    <!--
+      ── hi pointer (red, above the array) ───────────────────────
+      Points downward onto the hi cell from above.
+    -->
+    <g id="ptr-hi" opacity="0">
+      <line id="hi-line" stroke="#D85A30" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text class="t" id="hi-text" text-anchor="middle" font-size="13"
+            fill="#993C1D" font-weight="500">hi</text>
+    </g>
+
+    <!--
+      ── mid pointer (orange, below the array) ───────────────────
+      Points upward from below the array onto the mid cell.
+      Placed below to avoid overlapping lo/hi labels when close.
+    -->
+    <g id="ptr-mid" opacity="0">
+      <line id="mid-line" stroke="#BA7517" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text class="t" id="mid-text-lbl" text-anchor="middle" font-size="13"
+            fill="#854F0B" font-weight="500">mid</text>
+    </g>
+
+    <!--
+      ── Comparison annotation box ────────────────────────────────
+      Shown during 'compare', 'shift-right', and 'shift-left' steps.
+      Displays:  x − arr[mid]  vs  arr[mid+k] − x  and the decision.
+      Background color: red tint when window shifts right, blue tint when left.
+    -->
+    <g id="cmp-group" opacity="0">
+      <rect id="cmp-box"   y="175" height="56" rx="8" fill="none" stroke-width="0.5"/>
+      <text id="cmp-line1" y="196" text-anchor="middle" font-size="12"
+            fill="var(--color-text-primary)"></text>     <!-- e.g. "x − arr[mid] = 5 − 2 = 3" -->
+      <text id="cmp-line2" y="214" text-anchor="middle" font-size="12"
+            fill="var(--color-text-secondary)"></text>   <!-- e.g. "arr[mid+k] − x = 6 − 5 = 1" -->
+      <text id="cmp-line3" y="230" text-anchor="middle" font-size="11"
+            fill="var(--color-text-secondary)"></text>   <!-- decision: "left farther → shift right" -->
+    </g>
+
+    <!--
+      ── x dashed vertical line ───────────────────────────────────
+      Marks the position of x on the number line to help visualise
+      which side of x each distance arc is on.
+    -->
+    <g id="x-marker" opacity="0">
+      <line id="x-line" stroke="#999" stroke-width="1" stroke-dasharray="4 3"/>
+      <text id="x-lbl"  text-anchor="middle" font-size="12"
+            fill="var(--color-text-secondary)"></text>
+    </g>
+
+    <!--
+      ── Distance arcs ────────────────────────────────────────────
+      Two quadratic Bézier arcs drawn over the array cells:
+        • Blue (left-arc)  — from arr[mid]   to x  (distance = x − arr[mid])
+        • Red  (right-arc) — from x          to arr[mid+k]  (distance = arr[mid+k] − x)
+      The shorter arc wins: its side is the side the window should NOT move toward.
+    -->
+    <g id="dist-arcs" opacity="0">
+      <path id="left-arc"  fill="none" stroke="#3B8BD4" stroke-width="1.5" stroke-dasharray="5 3"/>
+      <text id="left-dist" font-size="11" fill="#185FA5" text-anchor="middle"/>  <!-- distance label -->
+      <path id="right-arc" fill="none" stroke="#D85A30" stroke-width="1.5" stroke-dasharray="5 3"/>
+      <text id="right-dist" font-size="11" fill="#993C1D" text-anchor="middle"/> <!-- distance label -->
+    </g>
+
+    <!--
+      ── Final result label ───────────────────────────────────────
+      Appears only on the 'done' step, showing the answer window values.
+    -->
+    <text id="result-label" x="340" y="330" text-anchor="middle"
+          font-size="13" fill="#0F6E56" opacity="0" font-weight="500"/>
+  </svg>
+
+  <!-- Step explanation message -->
+  <p id="step-msg" class="msg" style="text-align:center; margin-bottom:12px"></p>
+
+  <!-- Navigation controls -->
+  <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap">
+    <button class="step-btn" id="btn-prev">← Prev</button>
+    <span   class="label"    id="step-counter"></span>
+    <button class="step-btn" id="btn-next">Next →</button>
+    <button class="step-btn" id="btn-reset">Reset</button>
+  </div>
+
+  <!-- Problem parameters displayed below the controls -->
+  <p class="label" style="text-align:center; margin-top:10px">
+    arr = [1, 2, 3, 4, 5, 6, 7, 8],&nbsp;&nbsp;k = 3,&nbsp;&nbsp;x = 5
+  </p>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIGURATION
+// ─────────────────────────────────────────────────────────────────────────────
+// Problem input — change these to visualize a different example
+const arr = [1, 2, 3, 4, 5, 6, 7, 8];
+const k = 3, x = 5;
+const n = arr.length;
+
+// SVG layout constants
+const CW     = 60;                          // cell width in SVG units
+const GAP    = 6;                           // gap between cells
+const totalW = n * CW + (n - 1) * GAP;     // total width of all cells
+const startX = (680 - totalW) / 2;         // left x so cells are centered in 680px canvas
+const cellY  = 52;                          // y coordinate of cell top edge
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPER GEOMETRY
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Returns the horizontal center x of cell i (used for pointer and arc anchors). */
+function cx(i)    { return startX + i * (CW + GAP) + CW / 2; }
+
+/** Returns the left x edge of cell i (used to position rect highlights). */
+function cellX(i) { return startX + i * (CW + GAP); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUILD THE ARRAY GRID IN SVG
+// Each cell: a rect background + a value label + an index label below it
+// ─────────────────────────────────────────────────────────────────────────────
+const cellsG = document.getElementById('cells');
+const valG   = document.getElementById('val-labels');
+const idxG   = document.getElementById('idx-labels');
+
+arr.forEach((v, i) => {
+  // Cell background rectangle
+  const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  r.setAttribute('x',            cellX(i));
+  r.setAttribute('y',            cellY);
+  r.setAttribute('width',        CW);
+  r.setAttribute('height',       52);
+  r.setAttribute('rx',           6);
+  r.setAttribute('fill',         'var(--color-background-secondary)');
+  r.setAttribute('stroke',       'var(--color-border-tertiary)');
+  r.setAttribute('stroke-width', '0.5');
+  r.id = `cell-${i}`;
+  cellsG.appendChild(r);
+
+  // Value label centred vertically inside the cell
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  t.setAttribute('x',                cx(i));
+  t.setAttribute('y',                cellY + 30);
+  t.setAttribute('text-anchor',      'middle');
+  t.setAttribute('dominant-baseline','central');
+  t.setAttribute('font-size',        '15');
+  t.setAttribute('font-weight',      '500');
+  t.setAttribute('fill',             'var(--color-text-primary)');
+  t.textContent = v;
+  valG.appendChild(t);
+
+  // Index label below the cell (shows array position)
+  const ti = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  ti.setAttribute('x',          cx(i));
+  ti.setAttribute('y',          cellY + 66);
+  ti.setAttribute('text-anchor','middle');
+  ti.setAttribute('font-size',  '11');
+  ti.setAttribute('fill',       'var(--color-text-secondary)');
+  ti.textContent = i;
+  idxG.appendChild(ti);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUILD ALL ANIMATION STEPS
+// Each step snapshot captures the complete state needed to render one frame.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Simulates the binary search algorithm and records every logical step:
+ *   'init'        — initial state with lo=0, hi=n-k (before loop)
+ *   'compare'     — mid computed; about to compare distances
+ *   'shift-right' — left distance > right distance → lo = mid+1
+ *   'shift-left'  — right distance ≥ left distance → hi = mid
+ *   'done'        — lo == hi; answer window found
+ *
+ * @returns {Array} Array of step objects with all state needed to render
+ */
+function buildSteps() {
+  const steps = [];
+
+  // Step 0: Initial state — show lo and hi, no mid yet
+  steps.push({
+    lo: 0, hi: n - k, mid: -1, action: 'init',
+    msg: `Initialize: lo=0, hi=${n - k} (= n−k, the furthest the window can start). We search for the best left index.`
+  });
+
+  let lo = 0, hi = n - k;
+
+  while (lo < hi) {
+    // ── Midpoint (avoids integer overflow vs (lo+hi)/2) ──────────
+    const mid = lo + ((hi - lo) >> 1);
+
+    // ── Key comparison ────────────────────────────────────────────
+    // lDist: distance of left window edge (arr[mid]) from x
+    //        = x − arr[mid]  (positive because array is sorted and lo≤x range)
+    // rDist: distance of right window edge (arr[mid+k]) from x
+    //        = arr[mid+k] − x
+    const lDist = x - arr[mid];
+    const rDist = arr[mid + k] - x;
+
+    // Step: show the comparison being made this iteration
+    steps.push({
+      lo, hi, mid, lDist, rDist, action: 'compare',
+      msg: `mid=${mid}: compare x−arr[${mid}] = ${x}−${arr[mid]} = ${lDist}  vs  arr[${mid + k}]−x = ${arr[mid + k]}−${x} = ${rDist}`
+    });
+
+    if (lDist > rDist) {
+      // Left edge is farther from x than the right edge.
+      // The current window [mid, mid+k) is shifted too far left.
+      // Move lo rightward past mid — the left boundary must advance.
+      steps.push({
+        lo: mid + 1, hi, mid, lDist, rDist, action: 'shift-right',
+        msg: `Left edge farther (${lDist} > ${rDist}) → window too far left → lo = mid+1 = ${mid + 1}`
+      });
+      lo = mid + 1;
+    } else {
+      // Right edge is farther (or equal — ties go to smaller, i.e. left element).
+      // The current window [mid, mid+k) is at least as good as one shifted right.
+      // Move hi down to mid — the left boundary cannot be beyond mid.
+      steps.push({
+        lo, hi: mid, mid, lDist, rDist, action: 'shift-left',
+        msg: `Right edge farther or equal (${lDist} ≤ ${rDist}) → keep left → hi = mid = ${mid}`
+      });
+      hi = mid;
+    }
+  }
+
+  // lo == hi: binary search converged on the optimal window start index
+  steps.push({
+    lo, hi, mid: lo, action: 'done',
+    msg: `lo = hi = ${lo} → window starts at index ${lo}. Answer: [${arr.slice(lo, lo + k).join(', ')}]`
+  });
+
+  return steps;
+}
+
+const steps = buildSteps();
+let cur = 0; // current step index (0-based)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER — Updates all SVG elements to reflect a single step snapshot
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * @param {Object} s — one step object from buildSteps()
+ */
+function render(s) {
+  // ── 1. Reset all cell colors to default (each render starts clean) ──
+  arr.forEach((_, i) => {
+    const cell = document.getElementById(`cell-${i}`);
+    cell.setAttribute('fill',         'var(--color-background-secondary)');
+    cell.setAttribute('stroke',       'var(--color-border-tertiary)');
+    cell.setAttribute('stroke-width', '0.5');
+  });
+
+  // ── 2. Green window rectangle ───────────────────────────────────────
+  // Outlines the k-element window starting at index lo
+  const win = document.getElementById('win-rect');
+  if (s.action !== 'init') {
+    const wx = cellX(s.lo);
+    const ww = k * CW + (k - 1) * GAP; // exact width to cover exactly k cells + their gaps
+    win.setAttribute('x',       wx);
+    win.setAttribute('width',   ww);
+    win.setAttribute('opacity', '1');
+  } else {
+    win.setAttribute('opacity', '0'); // hide on the init step (no window yet)
+  }
+
+  // ── 3. Yellow mid highlight rect ────────────────────────────────────
+  // Covers the mid cell to make it visually distinct from the window
+  const mr = document.getElementById('mid-rect');
+  if (s.mid >= 0 && s.action !== 'done' && s.action !== 'init') {
+    mr.setAttribute('x',       cellX(s.mid));
+    mr.setAttribute('width',   CW);
+    mr.setAttribute('fill',    '#FAC775');  // warm amber/gold
+    mr.setAttribute('opacity', '0.45');
+  } else {
+    mr.setAttribute('opacity', '0');
+  }
+
+  // ── 4. Final answer — green cell highlights ──────────────────────────
+  // When algorithm converges, colour the result window cells green
+  if (s.action === 'done') {
+    for (let i = s.lo; i < s.lo + k; i++) {
+      const cell = document.getElementById(`cell-${i}`);
+      cell.setAttribute('fill',         '#E1F5EE'); // light green fill
+      cell.setAttribute('stroke',       '#1D9E75'); // green border
+      cell.setAttribute('stroke-width', '1.5');
+    }
+    win.setAttribute('opacity', '0'); // hide window rect — result cells are highlighted instead
+    document.getElementById('result-label').setAttribute('opacity', '1');
+    document.getElementById('result-label').textContent =
+      `Result: [${arr.slice(s.lo, s.lo + k).join(', ')}]`;
+  } else {
+    document.getElementById('result-label').setAttribute('opacity', '0');
+  }
+
+  // ── 5. Pointer helper: lo, hi, mid ──────────────────────────────────
+  /**
+   * Positions and shows an arrow pointer above (or below) a specific cell.
+   * @param {string} id      — id of the <g> group element
+   * @param {string} lineId  — id of the <line> inside the group
+   * @param {string} textId  — id of the <text> label inside the group
+   * @param {number} idx     — array index to point at
+   * @param {string} color   — unused (stroke set in SVG markup)
+   * @param {string} label   — text label (lo / hi / mid)
+   * @param {number} offset  — horizontal text offset to avoid label collisions
+   */
+  function setPointer(id, lineId, textId, idx, color, label, offset) {
+    const g = document.getElementById(id);
+    if (idx < 0 || idx > n - k) { g.setAttribute('opacity', '0'); return; }
+    const px = cx(idx);
+    const ly = cellY - 4;   // line end: just above the cell top
+    const ty = cellY - 22;  // text: above the line end
+    document.getElementById(lineId).setAttribute('x1', px);
+    document.getElementById(lineId).setAttribute('y1', ty + 8); // line starts below label
+    document.getElementById(lineId).setAttribute('x2', px);
+    document.getElementById(lineId).setAttribute('y2', ly);
+    document.getElementById(textId).setAttribute('x', px + offset);
+    document.getElementById(textId).setAttribute('y', ty);
+    document.getElementById(textId).textContent = label;
+    g.setAttribute('opacity', '1');
+  }
+
+  // lo pointer — blue, above cell lo
+  setPointer('ptr-lo', 'lo-line', 'lo-text', s.lo, '#3B8BD4', 'lo', 0);
+  // hi pointer — red, above cell hi
+  setPointer('ptr-hi', 'hi-line', 'hi-text', s.hi, '#D85A30', 'hi', 0);
+
+  // mid pointer — orange, BELOW the array (to avoid crowding above the cells)
+  if (s.mid >= 0 && s.action !== 'init' && s.action !== 'done') {
+    const g  = document.getElementById('ptr-mid');
+    const px = cx(s.mid);
+    const ly = cellY + 52 + 4;  // line start: just below the cell bottom
+    const ty = cellY + 52 + 26; // text: below the line start
+    document.getElementById('mid-line').setAttribute('x1', px);
+    document.getElementById('mid-line').setAttribute('y1', ly);
+    document.getElementById('mid-line').setAttribute('x2', px);
+    document.getElementById('mid-line').setAttribute('y2', ty);
+    document.getElementById('mid-text-lbl').setAttribute('x', px);
+    document.getElementById('mid-text-lbl').setAttribute('y', ty + 14);
+    g.setAttribute('opacity', '1');
+  } else {
+    document.getElementById('ptr-mid').setAttribute('opacity', '0');
+  }
+
+  // ── 6. Comparison box + distance arcs + x marker ────────────────────
+  // These only appear on 'compare', 'shift-right', and 'shift-left' steps
+  const cg = document.getElementById('cmp-group');
+  if (s.action === 'compare' || s.action === 'shift-right' || s.action === 'shift-left') {
+
+    // Position the comparison box below the SVG content
+    const boxW = 260;
+    const boxX = Math.min(Math.max(340 - boxW / 2, 40), 380); // keep within canvas
+    document.getElementById('cmp-box').setAttribute('x',     boxX);
+    document.getElementById('cmp-box').setAttribute('width', boxW);
+
+    // Centre all three text lines horizontally within the box
+    const boxMidX = boxX + boxW / 2;
+    ['cmp-line1', 'cmp-line2', 'cmp-line3'].forEach(id =>
+      document.getElementById(id).setAttribute('x', boxMidX)
+    );
+
+    // Choose box color: red = window shifts right, blue = window stays/shifts left
+    const shiftRight = s.lDist > s.rDist;
+    const boxColor   = shiftRight ? '#993C1D' : '#185FA5';
+    document.getElementById('cmp-box').setAttribute('stroke', boxColor);
+    document.getElementById('cmp-box').setAttribute('fill',   shiftRight ? '#FAECE7' : '#E6F1FB');
+
+    // Fill in the three comparison text lines
+    document.getElementById('cmp-line1').textContent =
+      `x − arr[mid] = ${x} − ${arr[s.mid]} = ${s.lDist}`;
+    document.getElementById('cmp-line2').textContent =
+      `arr[mid+k] − x = ${arr[s.mid + k]} − ${x} = ${s.rDist}`;
+    document.getElementById('cmp-line3').textContent =
+      shiftRight ? `left farther → shift right` : `right farther or equal → keep left`;
+    document.getElementById('cmp-line3').setAttribute('fill', boxColor);
+
+    cg.setAttribute('opacity', '1');
+
+    // ── Distance arcs ────────────────────────────────────────────────
+    // Arcs curve above the array to show the two distances being compared.
+    // x pixel position is computed by linearly interpolating x's value within
+    // the array value range, mapped to the canvas coordinate space.
+    const arcY   = cellY + 26; // vertical center of the cell
+    const xPxPos = (x - arr[0]) * (CW + GAP) + startX + CW / 2;
+
+    // Left arc: from center of arr[mid] cell →curved up→ x line position
+    document.getElementById('left-arc').setAttribute('d',
+      `M ${cx(s.mid)} ${arcY} Q ${(cx(s.mid) + xPxPos) / 2} ${arcY - 28} ${xPxPos} ${arcY}`
+    );
+    // Right arc: from x position →curved up→ center of arr[mid+k] cell
+    document.getElementById('right-arc').setAttribute('d',
+      `M ${xPxPos} ${arcY} Q ${(xPxPos + cx(s.mid + k)) / 2} ${arcY - 28} ${cx(s.mid + k)} ${arcY}`
+    );
+
+    // Distance value labels above each arc's apex
+    document.getElementById('left-dist').setAttribute('x', (cx(s.mid) + xPxPos) / 2);
+    document.getElementById('left-dist').setAttribute('y', arcY - 32);
+    document.getElementById('left-dist').textContent = `${s.lDist}`;
+
+    document.getElementById('right-dist').setAttribute('x', (xPxPos + cx(s.mid + k)) / 2);
+    document.getElementById('right-dist').setAttribute('y', arcY - 32);
+    document.getElementById('right-dist').textContent = `${s.rDist}`;
+
+    document.getElementById('dist-arcs').setAttribute('opacity', '1');
+
+    // ── x dashed vertical marker ─────────────────────────────────────
+    const xm = document.getElementById('x-marker');
+    document.getElementById('x-line').setAttribute('x1', xPxPos);
+    document.getElementById('x-line').setAttribute('y1', cellY - 8);
+    document.getElementById('x-line').setAttribute('x2', xPxPos);
+    document.getElementById('x-line').setAttribute('y2', cellY + 60);
+    document.getElementById('x-lbl').setAttribute('x', xPxPos);
+    document.getElementById('x-lbl').setAttribute('y', cellY - 14);
+    document.getElementById('x-lbl').textContent = `x=${x}`;
+    xm.setAttribute('opacity', '1');
+
+  } else {
+    // Hide all comparison/arc elements on non-compare steps
+    cg.setAttribute('opacity', '0');
+    document.getElementById('dist-arcs').setAttribute('opacity', '0');
+    document.getElementById('x-marker').setAttribute('opacity', '0');
+  }
+
+  // ── 7. Update step text and button states ────────────────────────────
+  document.getElementById('step-msg').textContent      = s.msg;
+  document.getElementById('step-counter').textContent  = `Step ${cur + 1} / ${steps.length}`;
+  document.getElementById('btn-prev').disabled         = cur === 0;
+  document.getElementById('btn-next').disabled         = cur === steps.length - 1;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUTTON HANDLERS
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('btn-next').onclick  = () => { if (cur < steps.length - 1) { cur++; render(steps[cur]); } };
+document.getElementById('btn-prev').onclick  = () => { if (cur > 0) { cur--; render(steps[cur]); } };
+document.getElementById('btn-reset').onclick = () => { cur = 0; render(steps[cur]); };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INITIAL RENDER — show step 0
+// ─────────────────────────────────────────────────────────────────────────────
+render(steps[0]);
+</script>
