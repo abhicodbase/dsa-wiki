@@ -1,0 +1,233 @@
+
+<style>
+  h2.sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0); }
+  .btn { padding:6px 16px; border:0.5px solid var(--color-border-secondary); border-radius:var(--border-radius-md); background:transparent; color:var(--color-text-primary); cursor:pointer; font-size:13px; }
+  .btn:hover { background:var(--color-background-secondary); }
+  .btn:disabled { opacity:0.35; cursor:default; }
+  .msg { font-size:13px; color:var(--color-text-secondary); text-align:center; min-height:1.4em; margin:8px 0 10px; }
+  .legend { display:flex; gap:16px; justify-content:center; margin-bottom:10px; font-size:12px; color:var(--color-text-secondary); align-items:center; flex-wrap:wrap; }
+  .dot { width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle; }
+</style>
+<h2 class="sr-only">Step-by-step animation of Kahn's BFS topological sort on a course prerequisite graph</h2>
+
+<div class="legend">
+  <span><span class="dot" style="background:#E1F5EE;border:1.5px solid #1D9E75"></span>in queue (indegree=0)</span>
+  <span><span class="dot" style="background:#EAF3DE;border:1.5px solid #639922"></span>processed</span>
+  <span><span class="dot" style="background:#EEEDFE;border:1.5px solid #534AB7"></span>being decremented</span>
+  <span><span class="dot" style="background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary)"></span>waiting</span>
+</div>
+
+<svg id="viz" width="100%" viewBox="0 0 680 340" role="img">
+  <title>Kahn's BFS topological sort</title>
+  <desc>Graph of 6 courses with prerequisites, showing BFS peeling step by step</desc>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <g id="edges"></g>
+  <g id="nodes"></g>
+  <g id="deg-labels"></g>
+  <g id="queue-row"></g>
+  <g id="order-row"></g>
+  <text class="ts" id="q-title" x="40" y="244" font-size="11" fill="var(--color-text-secondary)">queue</text>
+  <text class="ts" id="o-title" x="40" y="308" font-size="11" fill="var(--color-text-secondary)">order</text>
+</svg>
+
+<p class="msg" id="msg"></p>
+<div style="display:flex;gap:10px;justify-content:center;align-items:center">
+  <button class="btn" id="bp">← Prev</button>
+  <span style="font-size:13px;color:var(--color-text-secondary)" id="ctr"></span>
+  <button class="btn" id="bn">Next →</button>
+  <button class="btn" id="br">Reset</button>
+</div>
+<p style="font-size:12px;color:var(--color-text-secondary);text-align:center;margin-top:10px">
+  courses: 0→1, 0→2, 1→3, 2→3, 3→4, 2→5 &nbsp;|&nbsp; k=6 courses
+</p>
+
+<script>
+const nodes = [
+  {id:0, x:100, y:80,  label:'0'},
+  {id:1, x:240, y:40,  label:'1'},
+  {id:2, x:240, y:130, label:'2'},
+  {id:3, x:390, y:80,  label:'3'},
+  {id:4, x:530, y:80,  label:'4'},
+  {id:5, x:390, y:170, label:'5'},
+];
+const edges = [[0,1],[0,2],[1,3],[2,3],[3,4],[2,5]];
+const R = 26;
+
+const COL = {
+  wait:   {fill:'var(--color-background-secondary)', stroke:'var(--color-border-tertiary)', sw:'0.5'},
+  queue:  {fill:'#E1F5EE', stroke:'#1D9E75', sw:'1.5'},
+  active: {fill:'#EEEDFE', stroke:'#534AB7', sw:'1.5'},
+  done:   {fill:'#EAF3DE', stroke:'#639922', sw:'1.5'},
+};
+
+const svg = document.getElementById('viz');
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+  return e;
+}
+
+const edgeEls = [];
+edges.forEach(([a,b]) => {
+  const na = nodes[a], nb = nodes[b];
+  const dx = nb.x-na.x, dy = nb.y-na.y, len = Math.sqrt(dx*dx+dy*dy);
+  const ux = dx/len, uy = dy/len;
+  const x1 = na.x+ux*R, y1 = na.y+uy*R, x2 = nb.x-ux*R, y2 = nb.y-uy*R;
+  const line = el('line',{x1,y1,x2,y2,stroke:'var(--color-border-secondary)','stroke-width':'1',
+    'marker-end':'url(#arr)','transition':'stroke 0.3s'});
+  document.getElementById('edges').appendChild(line);
+  edgeEls.push({line, from:a, to:b});
+});
+
+const nodeEls = {}, degEls = {};
+nodes.forEach(n => {
+  const g = el('g',{});
+  const c = el('circle',{cx:n.x,cy:n.y,r:R,fill:COL.wait.fill,stroke:COL.wait.stroke,'stroke-width':COL.wait.sw,transition:'fill 0.3s,stroke 0.3s'});
+  const t = el('text',{x:n.x,y:n.y,'text-anchor':'middle','dominant-baseline':'central','font-size':'15','font-weight':'500',fill:'var(--color-text-primary)'});
+  t.textContent = n.label;
+  g.appendChild(c); g.appendChild(t);
+  document.getElementById('nodes').appendChild(g);
+  nodeEls[n.id] = c;
+
+  const dt = el('text',{x:n.x,y:n.y+R+14,'text-anchor':'middle','font-size':'11',fill:'var(--color-text-secondary)'});
+  document.getElementById('deg-labels').appendChild(dt);
+  degEls[n.id] = dt;
+});
+
+function buildSteps() {
+  const adj = Array.from({length:6},()=>[]);
+  const indeg = Array(6).fill(0);
+  edges.forEach(([a,b]) => { adj[a].push(b); indeg[b]++; });
+
+  const steps = [];
+  const deg = [...indeg];
+
+  steps.push({
+    type:'init', nodeStates: Array(6).fill('wait'),
+    deg:[...deg], queue:[], order:[], active:-1, decrement:[],
+    msg:`Build indegree array. Courses with indegree=0 have no prerequisites → enter queue first.`
+  });
+
+  const q = [];
+  for(let i=0;i<6;i++) if(deg[i]===0) q.push(i);
+  const ns0 = Array(6).fill('wait');
+  q.forEach(x => ns0[x]='queue');
+  steps.push({
+    type:'enqueue-init', nodeStates:[...ns0],
+    deg:[...deg], queue:[...q], order:[], active:-1, decrement:[],
+    msg:`Nodes ${q.join(', ')} have indegree 0 → enqueue them.`
+  });
+
+  const order = [];
+  const queue = [...q];
+  while(queue.length) {
+    const node = queue.shift();
+    const ns = steps[steps.length-1].nodeStates.map((s,i)=> i===node?'active':s);
+    steps.push({
+      type:'dequeue', nodeStates:[...ns],
+      deg:[...deg], queue:[...queue], order:[...order], active:node, decrement:[],
+      msg:`Dequeue ${node} → add to order. Now process its neighbors.`
+    });
+    order.push(node);
+    const dec = [];
+    adj[node].forEach(nb => {
+      deg[nb]--;
+      dec.push(nb);
+    });
+    const ns2 = steps[steps.length-1].nodeStates.map((s,i)=>{
+      if(i===node) return 'done';
+      if(dec.includes(i)) return 'active';
+      return s;
+    });
+    steps.push({
+      type:'decrement', nodeStates:[...ns2],
+      deg:[...deg], queue:[...queue], order:[...order], active:node, decrement:[...dec],
+      msg:`Decrement indegree of neighbors [${dec.join(', ')}]. Those reaching 0 will be enqueued.`
+    });
+    const newQ = [];
+    adj[node].forEach(nb => { if(deg[nb]===0) { queue.push(nb); newQ.push(nb); }});
+    const ns3 = ns2.map((s,i)=>{
+      if(i===node) return 'done';
+      if(newQ.includes(i)) return 'queue';
+      if(dec.includes(i) && deg[i]>0) return 'wait';
+      return s;
+    });
+    if(newQ.length) steps.push({
+      type:'enqueue', nodeStates:[...ns3],
+      deg:[...deg], queue:[...queue], order:[...order], active:-1, decrement:[],
+      msg:`${newQ.join(', ')} now have indegree 0 → enqueue.`
+    });
+  }
+  steps.push({
+    type:'done', nodeStates:Array(6).fill('done'),
+    deg:[...deg], queue:[], order:[...order], active:-1, decrement:[],
+    msg:`Done! Topological order: [${order.join(' → ')}]. All ${order.length} courses scheduled.`
+  });
+  return steps;
+}
+
+const steps = buildSteps();
+let cur = 0;
+
+const QY = 232, OY = 296, SZ = 28, GAP = 6, QX0 = 80, OX0 = 80;
+const qRow = document.getElementById('queue-row');
+const oRow = document.getElementById('order-row');
+
+function render(s) {
+  nodes.forEach(n => {
+    const col = COL[s.nodeStates[n.id]] || COL.wait;
+    nodeEls[n.id].setAttribute('fill', col.fill);
+    nodeEls[n.id].setAttribute('stroke', col.stroke);
+    nodeEls[n.id].setAttribute('stroke-width', col.sw);
+    degEls[n.id].textContent = `deg:${s.deg[n.id]}`;
+  });
+
+  edgeEls.forEach(({line,from,to}) => {
+    const hi = s.active===from;
+    line.setAttribute('stroke', hi ? '#534AB7' : 'var(--color-border-secondary)');
+    line.setAttribute('stroke-width', hi ? '1.5' : '1');
+  });
+
+  qRow.innerHTML = '';
+  s.queue.forEach((v,i) => {
+    const rx = QX0 + i*(SZ+GAP);
+    const rct = el('rect',{x:rx,y:QY,width:SZ,height:SZ,rx:6,fill:'#E1F5EE',stroke:'#1D9E75','stroke-width':'1'});
+    const txt = el('text',{x:rx+SZ/2,y:QY+SZ/2,'text-anchor':'middle','dominant-baseline':'central','font-size':'13','font-weight':'500',fill:'#085041'});
+    txt.textContent = v;
+    qRow.appendChild(rct); qRow.appendChild(txt);
+  });
+  if(s.queue.length===0) {
+    const e = el('text',{x:QX0,y:QY+SZ/2,'dominant-baseline':'central','font-size':'12',fill:'var(--color-text-secondary)'});
+    e.textContent = 'empty';
+    qRow.appendChild(e);
+  }
+
+  oRow.innerHTML = '';
+  s.order.forEach((v,i) => {
+    const rx = OX0 + i*(SZ+GAP);
+    const rct = el('rect',{x:rx,y:OY,width:SZ,height:SZ,rx:6,fill:'#EAF3DE',stroke:'#639922','stroke-width':'1'});
+    const txt = el('text',{x:rx+SZ/2,y:OY+SZ/2,'text-anchor':'middle','dominant-baseline':'central','font-size':'13','font-weight':'500',fill:'#27500A'});
+    txt.textContent = v;
+    oRow.appendChild(rct); oRow.appendChild(txt);
+    if(i < s.order.length-1) {
+      const arr = el('text',{x:rx+SZ+GAP/2,y:OY+SZ/2,'dominant-baseline':'central','font-size':'11',fill:'var(--color-text-secondary)'});
+      arr.textContent='→'; oRow.appendChild(arr);
+    }
+  });
+
+  document.getElementById('msg').textContent = s.msg;
+  document.getElementById('ctr').textContent = `Step ${cur+1} / ${steps.length}`;
+  document.getElementById('bp').disabled = cur===0;
+  document.getElementById('bn').disabled = cur===steps.length-1;
+}
+
+document.getElementById('bn').onclick = () => { if(cur<steps.length-1){cur++;render(steps[cur]);} };
+document.getElementById('bp').onclick = () => { if(cur>0){cur--;render(steps[cur]);} };
+document.getElementById('br').onclick = () => { cur=0; render(steps[0]); };
+render(steps[0]);
+</script>

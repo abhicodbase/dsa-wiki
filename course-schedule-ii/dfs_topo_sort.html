@@ -1,0 +1,224 @@
+
+<style>
+  h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  .btn{padding:6px 16px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-primary);cursor:pointer;font-size:13px}
+  .btn:hover{background:var(--color-background-secondary)}
+  .btn:disabled{opacity:.35;cursor:default}
+  .msg{font-size:13px;color:var(--color-text-secondary);text-align:center;min-height:2.4em;margin:8px 0 10px;line-height:1.5}
+  .legend{display:flex;gap:14px;justify-content:center;margin-bottom:10px;font-size:12px;color:var(--color-text-secondary);align-items:center;flex-wrap:wrap}
+  .dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+</style>
+<h2 class="sr-only">Step-by-step DFS topological sort with three-color cycle detection</h2>
+
+<div class="legend">
+  <span><span class="dot" style="background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary)"></span>unvisited</span>
+  <span><span class="dot" style="background:#FAEEDA;border:1.5px solid #BA7517"></span>visiting (on stack)</span>
+  <span><span class="dot" style="background:#EAF3DE;border:1.5px solid #639922"></span>visited (done)</span>
+</div>
+
+<svg id="viz" width="100%" viewBox="0 0 680 310" role="img">
+  <title>DFS topological sort</title>
+  <desc>Graph of 6 courses, DFS post-order builds reverse topological order</desc>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <g id="edges"></g>
+  <g id="nodes"></g>
+  <g id="state-labels"></g>
+  <!-- Call stack -->
+  <text id="stk-title" x="590" y="30" font-size="11" fill="var(--color-text-secondary)" text-anchor="middle">call stack</text>
+  <g id="call-stack"></g>
+  <!-- Post-order -->
+  <text id="po-title" x="40" y="278" font-size="11" fill="var(--color-text-secondary)">post-order</text>
+  <g id="post-row"></g>
+  <!-- Result (reversed) -->
+  <text id="res-title" x="40" y="308" font-size="11" fill="var(--color-text-secondary)" opacity="0">result</text>
+  <g id="res-row"></g>
+</svg>
+
+<p class="msg" id="msg"></p>
+<div style="display:flex;gap:10px;justify-content:center;align-items:center">
+  <button class="btn" id="bp">← Prev</button>
+  <span style="font-size:13px;color:var(--color-text-secondary)" id="ctr"></span>
+  <button class="btn" id="bn">Next →</button>
+  <button class="btn" id="br">Reset</button>
+</div>
+<p style="font-size:12px;color:var(--color-text-secondary);text-align:center;margin-top:10px">
+  edges: 0→1, 0→2, 1→3, 2→3, 3→4, 2→5 &nbsp;|&nbsp; 6 courses
+</p>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for(const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+  if(text !== undefined) e.textContent = text;
+  return e;
+}
+
+const nodePos = [{x:100,y:100},{x:230,y:50},{x:230,y:155},{x:370,y:100},{x:490,y:100},{x:370,y:200}];
+const edges = [[0,1],[0,2],[1,3],[2,3],[3,4],[2,5]];
+const adj = Array.from({length:6},()=>[]);
+edges.forEach(([a,b])=>adj[a].push(b));
+const R = 26;
+
+const COL = {
+  unvisited: {fill:'var(--color-background-secondary)', stroke:'var(--color-border-tertiary)', sw:'0.5', tf:'var(--color-text-primary)'},
+  visiting:  {fill:'#FAEEDA', stroke:'#BA7517', sw:'1.5', tf:'#633806'},
+  visited:   {fill:'#EAF3DE', stroke:'#639922', sw:'1.5', tf:'#27500A'},
+};
+
+// Draw static edges
+const edgesG = document.getElementById('edges');
+const edgeEls = [];
+edges.forEach(([a,b]) => {
+  const na = nodePos[a], nb = nodePos[b];
+  const dx=nb.x-na.x, dy=nb.y-na.y, len=Math.sqrt(dx*dx+dy*dy);
+  const ux=dx/len, uy=dy/len;
+  const line = el('line',{x1:na.x+ux*R,y1:na.y+uy*R,x2:nb.x-ux*R,y2:nb.y-uy*R,
+    stroke:'var(--color-border-secondary)','stroke-width':'1','marker-end':'url(#arr)'});
+  edgesG.appendChild(line);
+  edgeEls.push({line,from:a,to:b});
+});
+
+// Draw nodes
+const nodesG = document.getElementById('nodes');
+const stateG = document.getElementById('state-labels');
+const circEls={}, statEls={};
+nodePos.forEach((n,i)=>{
+  const c = el('circle',{cx:n.x,cy:n.y,r:R,fill:COL.unvisited.fill,stroke:COL.unvisited.stroke,'stroke-width':COL.unvisited.sw});
+  const t = el('text',{x:n.x,y:n.y,'text-anchor':'middle','dominant-baseline':'central','font-size':'15','font-weight':'500',fill:COL.unvisited.tf},String(i));
+  nodesG.appendChild(c); nodesG.appendChild(t);
+  circEls[i]=c;
+  const s = el('text',{x:n.x,y:n.y+R+14,'text-anchor':'middle','font-size':'10',fill:'var(--color-text-secondary)'},'');
+  stateG.appendChild(s); statEls[i]=s;
+});
+
+// Build steps via simulated DFS
+function buildSteps() {
+  const steps = [];
+  const state = Array(6).fill('unvisited'); // unvisited/visiting/visited
+  const postOrder = [];
+  const callStack = [];
+
+  function snap(msg, activeEdge=null) {
+    steps.push({
+      state:[...state], postOrder:[...postOrder],
+      callStack:[...callStack], msg, activeEdge
+    });
+  }
+
+  snap('Start: all nodes unvisited. We loop through each node and DFS from unvisited ones.');
+
+  function dfs(node) {
+    state[node] = 'visiting';
+    callStack.push(node);
+    snap(`Enter node ${node} → mark VISITING (on the call stack now).`);
+
+    for(const nb of adj[node]) {
+      if(state[nb]==='visiting') {
+        snap(`Edge ${node}→${nb}: neighbor ${nb} is VISITING → back edge → CYCLE detected!`, [node,nb]);
+        continue;
+      }
+      if(state[nb]==='visited') {
+        snap(`Edge ${node}→${nb}: neighbor ${nb} already VISITED → skip.`, [node,nb]);
+        continue;
+      }
+      snap(`Edge ${node}→${nb}: neighbor ${nb} is unvisited → recurse.`, [node,nb]);
+      dfs(nb);
+    }
+
+    state[node] = 'visited';
+    postOrder.push(node);
+    callStack.pop();
+    snap(`All neighbors of ${node} done → mark VISITED → push ${node} to post-order list.`);
+  }
+
+  for(let i=0;i<6;i++) {
+    if(state[i]==='unvisited') {
+      snap(`Outer loop: node ${i} is unvisited → start DFS from ${i}.`);
+      dfs(i);
+    }
+  }
+
+  snap(`DFS complete. Post-order: [${postOrder.join(', ')}]. Reverse it to get topological order: [${[...postOrder].reverse().join(' → ')}].`);
+  return steps;
+}
+
+const steps = buildSteps();
+let cur = 0;
+
+const SZ=26, GAP=5, POX=130, POY=268, RX=130, RY=298;
+const SKX=570, SKY0=240, SKH=28;
+
+function render(s) {
+  // Node colors + state labels
+  for(let i=0;i<6;i++){
+    const col = COL[s.state[i]];
+    circEls[i].setAttribute('fill',col.fill);
+    circEls[i].setAttribute('stroke',col.stroke);
+    circEls[i].setAttribute('stroke-width',col.sw);
+    statEls[i].textContent = s.state[i]==='unvisited'?'':s.state[i];
+    statEls[i].setAttribute('fill', s.state[i]==='visiting'?'#854F0B':s.state[i]==='visited'?'#3B6D11':'var(--color-text-secondary)');
+  }
+
+  // Edge highlights
+  edgeEls.forEach(({line,from,to})=>{
+    const active = s.activeEdge && s.activeEdge[0]===from && s.activeEdge[1]===to;
+    const fromVisiting = s.state[from]==='visiting';
+    line.setAttribute('stroke', active ? '#BA7517' : fromVisiting ? '#BA751755' : 'var(--color-border-secondary)');
+    line.setAttribute('stroke-width', active ? '2' : '1');
+  });
+
+  // Call stack (drawn bottom-up)
+  const stk = document.getElementById('call-stack');
+  stk.innerHTML='';
+  s.callStack.forEach((v,i)=>{
+    const y = SKY0 - i*SKH;
+    stk.appendChild(el('rect',{x:570,y,width:SZ*1.5,height:SKH-2,rx:5,fill:'#FAEEDA',stroke:'#BA7517','stroke-width':'1'}));
+    stk.appendChild(el('text',{x:570+SZ*0.75,y:y+(SKH-2)/2,'text-anchor':'middle','dominant-baseline':'central','font-size':'13','font-weight':'500',fill:'#633806'},String(v)));
+  });
+  if(s.callStack.length===0){
+    stk.appendChild(el('text',{x:590,y:SKY0+SKH/2,'text-anchor':'middle','font-size':'11',fill:'var(--color-text-secondary)'},'empty'));
+  }
+
+  // Post-order row
+  const por = document.getElementById('post-row');
+  por.innerHTML='';
+  s.postOrder.forEach((v,i)=>{
+    const x = POX + i*(SZ+GAP);
+    por.appendChild(el('rect',{x,y:POY-SZ/2,width:SZ,height:SZ,rx:5,fill:'#EAF3DE',stroke:'#639922','stroke-width':'1'}));
+    por.appendChild(el('text',{x:x+SZ/2,y:POY,'text-anchor':'middle','dominant-baseline':'central','font-size':'13','font-weight':'500',fill:'#27500A'},String(v)));
+  });
+
+  // Result row (reversed) — show only on last step
+  const resr = document.getElementById('res-row');
+  const resTitle = document.getElementById('res-title');
+  resr.innerHTML='';
+  const isLast = cur===steps.length-1;
+  resTitle.setAttribute('opacity', isLast?'1':'0');
+  if(isLast){
+    const rev = [...s.postOrder].reverse();
+    rev.forEach((v,i)=>{
+      const x = RX + i*(SZ+GAP);
+      resr.appendChild(el('rect',{x,y:RY-SZ/2,width:SZ,height:SZ,rx:5,fill:'#E1F5EE',stroke:'#1D9E75','stroke-width':'1.5'}));
+      resr.appendChild(el('text',{x:x+SZ/2,y:RY,'text-anchor':'middle','dominant-baseline':'central','font-size':'13','font-weight':'500',fill:'#085041'},String(v)));
+      if(i<rev.length-1){
+        resr.appendChild(el('text',{x:x+SZ+1,y:RY,'dominant-baseline':'central','font-size':'11',fill:'var(--color-text-secondary)'},'→'));
+      }
+    });
+  }
+
+  document.getElementById('msg').textContent = s.msg;
+  document.getElementById('ctr').textContent = `Step ${cur+1} / ${steps.length}`;
+  document.getElementById('bp').disabled = cur===0;
+  document.getElementById('bn').disabled = cur===steps.length-1;
+}
+
+document.getElementById('bn').onclick=()=>{if(cur<steps.length-1){cur++;render(steps[cur]);}};
+document.getElementById('bp').onclick=()=>{if(cur>0){cur--;render(steps[cur]);}};
+document.getElementById('br').onclick=()=>{cur=0;render(steps[0]);};
+render(steps[0]);
+</script>
