@@ -114,6 +114,8 @@ Trade-off: strictly worse time and space; useful only as a brute-force correctne
 | [`backtracking-sort-skip-duplicates.cpp`](./backtracking-sort-skip-duplicates.cpp) | C++ backtracking solution with sibling-level duplicate pruning and full inline comments |
 | [`concept.png`](./concept.png) | Visual explanation of the decision tree and duplicate-skip pruning |
 
+![Combination Sum II — Decision Tree and Duplicate-Skip Pruning](./concept.png)
+
 ---
 
 ## Related Problems

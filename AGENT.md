@@ -192,7 +192,12 @@ ALWAYS include a table listing every file in the problem folder and what it cont
 | [`solution.cpp`](./solution.cpp) | Main C++ solution with full inline comments |
 | [`demo.html`](./demo.html)       | Step-by-step interactive visualization |
 | [`concept.png`](./concept.png)   | Visual explanation of the core concept |
+
+![<Problem Title> — <brief description of what the image shows>](./concept.png)
 ```
+
+> ⚠️ **Image Rendering Rule**: When `concept.png` exists, ALWAYS add an embedded image line **below** the Files table using `![]()` syntax (NOT a plain `[]()` link). Plain links render as hypertext only — they do not display the image inline. The `![]()` form is mandatory for the image to render in the markdown preview.
+
 
 ### Section 8 — Related Problems (ALWAYS required)
 
@@ -262,6 +267,7 @@ Before committing, verify ALL of the following:
 - [ ] README **Complexity table** has a Reason column
 - [ ] README **Edge Cases table** covers empty/equal/max-size/tie-break scenarios
 - [ ] README **Files table** lists every file in the folder
+- [ ] If `concept.png` exists, README has an **embedded image** (`![...](./concept.png)`) below the Files table — NOT just a plain link
 - [ ] README **Related Problems** has 3+ entries with links and descriptions
 - [ ] Solution filename uses **approach-based kebab-case** (not `solution.cpp`)
 - [ ] `git commit` message follows the format: `<problem-slug>: add <approach> solution + README`
