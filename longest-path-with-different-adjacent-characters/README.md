@@ -32,6 +32,8 @@ We can compute this using a post-order Depth-First Search (DFS):
 - The DFS function returns the longest single path extending down from the current node.
 - At each node, we update a global maximum (`ans`) with `best1 + best2 + 1`, representing the longest path that "turns" at this node.
 
+![Longest Path Tree Intuition](./longest_path_tree_intuition.svg)
+
 ---
 
 ## Common Pitfalls & Fixes
@@ -141,6 +143,8 @@ public:
 | File | Description |
 | :--- | :--- |
 | [`optimized-dfs.cpp`](./optimized-dfs.cpp) | Optimized C++ DFS solution with no hashing or copy overhead |
+| [`longest_path_tree_intuition.svg`](./longest_path_tree_intuition.svg) | SVG diagram showing tree paths and candidate arms selection |
+| [`longest_path_dfs_interactive.html`](./longest_path_dfs_interactive.html) | Interactive simulation of DFS path search with step-by-step trace |
 
 ---
 
