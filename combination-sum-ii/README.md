@@ -67,22 +67,22 @@ void backtrack(int start, vector<int>& v, int remaining,
 
 ## Complexity
 
-|           | Value   | Reason                                                                                       |
-|-----------|---------|----------------------------------------------------------------------------------------------|
-| **Time**  | O(2^N)  | Each element is either included or excluded — 2^N subsets in the worst case; sorting adds O(N log N) which is dominated |
-| **Space** | O(N)    | Recursion stack depth bounded by N (one element consumed per frame); current path `v` also O(N) |
+| | Value | Reason |
+| :--- | :--- | :--- |
+| **Time** | `O(2^N * N)` | Up to `2^N` subsets are explored. Copying a valid combination of size up to `N` to the result takes `O(N)`. Sorting candidates takes `O(N log N)`, which is dominated. |
+| **Space** | `O(N)` | Bounded by the recursion stack depth (max depth `N`) and the space needed to store the current combination. |
 
 ---
 
 ## Edge Cases
 
-| Scenario                                        | Result                                                             |
-|-------------------------------------------------|--------------------------------------------------------------------|
-| Single candidate equals target `[7], 7`         | `[[7]]`                                                            |
-| Single candidate exceeds target `[9], 5`        | `[]` — pruned immediately on the first iteration                   |
-| All elements identical `[2,2,2], target=4`      | `[[2,2]]` — duplicate-skip collapses all three choices into one    |
-| Target unreachable `[3,5,7], target=2`          | `[]` — every candidate > remaining on the first call               |
-| Multiple duplicates in winning combo `[1,1,1,1], target=3` | `[[1,1,1]]` — only one distinct combination exists    |
+| Scenario | Result |
+| :--- | :--- |
+| Single candidate equals target (`[7]`, target `7`) | `[[7]]` |
+| Single candidate exceeds target (`[9]`, target `5`) | `[]` (pruned immediately on the first iteration) |
+| All elements identical (`[2,2,2]`, target `4`) | `[[2,2]]` (duplicate-skip collapses sibling choices into one) |
+| Target unreachable (`[3,5,7]`, target `2`) | `[]` (every candidate exceeds target on the first call) |
+| Multiple duplicates in winning combo (`[1,1,1,1]`, target `3`) | `[[1,1,1]]` (duplicate-pruning guarantees only one distinct combination is recorded) |
 
 ---
 

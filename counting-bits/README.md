@@ -95,20 +95,20 @@ Both forms are identical — the compiler generates the same code either way.
 
 ## Complexity
 
-|           | Value | Reason |
-|-----------|-------|--------|
-| **Time**  | O(n)  | Single pass; O(1) work per index |
-| **Space** | O(n)  | Output array only — no extra structures |
+| | Value | Reason |
+| :--- | :--- | :--- |
+| **Time** | `O(N)` | Single pass; `O(1)` work per index. |
+| **Space** | `O(N)` | Output array only — no extra data structures are used. |
 
 ---
 
 ## Edge Cases
 
 | Input | Output | Note |
-|-------|--------|------|
-| `n = 0` | `[0]` | Only 0, which has no 1-bits |
-| `n = 1` | `[0, 1]` | 1 = `1` in binary |
-| Power of 2 (e.g. `n = 4`) | `..., 1` at index 4 | Powers of 2 always have exactly one 1-bit |
+| :--- | :--- | :--- |
+| `n = 0` | `[0]` | Only `0`, which has no `1` bits. |
+| `n = 1` | `[0, 1]` | `1` has one bit set (`1`). |
+| Power of 2 (e.g., `n = 4`) | `..., 1` | Powers of 2 always have exactly one `1` bit set in binary. |
 
 ---
 
