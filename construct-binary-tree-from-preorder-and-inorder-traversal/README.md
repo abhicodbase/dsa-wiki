@@ -39,6 +39,8 @@ This gives a clean recursive structure: each call knows its root (from preorder)
 
 The only performance concern is finding the root in the inorder array. A linear scan would make the overall algorithm O(n²). Precomputing a **hash map** `value → inorder index` makes every lookup O(1), keeping the total time O(n).
 
+![Constructing a Binary Tree — preorder/inorder split and result tree](./binary_tree_construction_overview.png)
+
 ---
 
 ## Approach: Recursive Divide & Conquer + HashMap
@@ -132,6 +134,7 @@ The `idx` pointer moves through `preorder` in the exact order nodes are visited.
 | File | Description |
 |------|-------------|
 | [`preorder-inorder-hashmap.cpp`](./preorder-inorder-hashmap.cpp) | C++ divide-and-conquer with O(1) inorder index lookup |
+| [`binary_tree_construction_overview.png`](./binary_tree_construction_overview.png) | Diagram showing preorder/inorder array split and the resulting tree |
 
 ---
 
