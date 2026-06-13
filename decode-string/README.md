@@ -109,21 +109,21 @@ public:
 
 ## Complexity
 
-|           | Value          | Reason |
-|-----------|----------------|--------|
-| **Time**  | O(max\_k × n)  | Each character may be written up to max\_k times during expansion; n = length of decoded output |
-| **Space** | O(n)           | Stack depth = nesting levels; total string storage proportional to output length |
+| | Value | Reason |
+| :--- | :--- | :--- |
+| **Time** | `O(N)` | Where `N` is the length of the decoded output string. Every character is processed and written to the output. |
+| **Space** | `O(L + N)` | Stack depth is proportional to the input length `L` (nesting level); `N` space is needed for the output string. |
 
 ---
 
 ## Edge Cases
 
 | Input | Output | Note |
-|-------|--------|------|
-| `"abc"` | `"abc"` | No brackets — `curr` accumulates directly |
-| `"10[a]"` | `"aaaaaaaaaa"` | Multi-digit count handled by `num = num*10 + digit` |
-| `"3[a2[b4[c]]]"` | deeply nested | Stacks grow to nesting depth, then unwind correctly |
-| `"2[3[a]]"` | `"aaaaaa"` | Outer count applied to already-expanded inner result |
+| :--- | :--- | :--- |
+| `abc` | `abc` | No brackets — `curr` accumulates directly |
+| `10[a]` | `aaaaaaaaaa` | Multi-digit count handled by `num = num * 10 + digit` |
+| `3[a2[b4[c]]]` | `abccccbccccabccccbccccabccccbcccc` | Deeply nested brackets; stacks grow to nesting depth and unwind correctly |
+| `2[3[a]]` | `aaaaaa` | Outer count applied to already-expanded inner result |
 
 ---
 
