@@ -104,10 +104,10 @@ public:
 
 ## Complexity
 
-|           | Value  | Reason |
-|-----------|--------|--------|
-| **Time**  | O(n)   | Each of the n nodes is created exactly once; map lookups are O(1) |
-| **Space** | O(n)   | Hash map stores n entries; recursion stack is O(h), h ≤ n |
+| | Value | Reason |
+| :--- | :--- | :--- |
+| **Time** | `O(N)` | Each of the `N` nodes is created exactly once. Hash map lookups for node positions are `O(1)`. |
+| **Space** | `O(N)` | The hash map stores `N` entries. The recursion stack depth is `O(H)` where `H` is the tree height (`H = N` in the worst case). |
 
 ---
 
@@ -119,13 +119,13 @@ The `idx` pointer moves through `preorder` in the exact order nodes are visited.
 
 ## Edge Cases
 
-| Scenario | Behaviour |
-|---|---|
-| Single node `[1], [1]` | Base case builds a single leaf |
-| Left-skewed tree `[3,2,1], [1,2,3]` | Recursion depth = n; right subtrees are all empty |
-| Right-skewed tree `[1,2,3], [1,2,3]` | Left subtrees are all empty |
-| Negative values | Hash map handles any integer keys |
-| All same values | Problem guarantees **unique** values — no ambiguity |
+| Scenario | Behavior |
+| :--- | :--- |
+| Single node (e.g., `[1]`, `[1]`) | Base case builds a single leaf node. |
+| Left-skewed tree (e.g., `[3,2,1]`, `[1,2,3]`) | Recursion depth is `N`; right subtrees are all empty. |
+| Right-skewed tree (e.g., `[1,2,3]`, `[1,2,3]`) | Left subtrees are all empty. |
+| Negative values | Hash map handles any integer keys. |
+| All same values | Problem statement guarantees **unique** values, so there is no ambiguity. |
 
 ---
 
