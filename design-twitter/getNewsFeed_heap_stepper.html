@@ -1,0 +1,138 @@
+
+<style>
+* { box-sizing: border-box; }
+h2.sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0); }
+.wrap { padding: 1rem 0; }
+.explain { background: var(--color-background-primary); border-left: 3px solid #7F77DD; border-radius: 0; padding: 0.65rem 1rem; font-size: 13px; color: var(--color-text-primary); line-height: 1.6; margin-bottom: 12px; }
+.explain .lbl { font-size: 11px; font-weight: 500; color: #534AB7; text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 3px; }
+.panels { display: flex; gap: 16px; align-items: flex-start; }
+.col { flex: 1; min-width: 0; }
+.col-title { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+.heap-box { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 0.75rem; min-height: 180px; }
+.heap-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 6px 10px; border-radius: var(--border-radius-md); margin-bottom: 6px; background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); }
+.heap-item.top { border: 1px solid #BA7517; background: #FAEEDA; }
+.heap-item.top span:first-child, .heap-item.top span:last-child { color: #633806; font-weight: 500; }
+.heap-item span:first-child { font-weight: 500; }
+.heap-item span:last-child { color: var(--color-text-secondary); font-family: var(--font-mono); font-size: 12px; }
+.result-box { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 0.75rem; min-height: 180px; }
+.result-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 20px; background: #E1F5EE; color: #085041; border: 0.5px solid #5DCAA5; margin: 0 6px 6px 0; }
+.empty { font-size: 12px; color: var(--color-text-tertiary); }
+.nav { display: flex; align-items: center; gap: 10px; margin-top: 0.75rem; }
+.nav button { font-size: 13px; padding: 5px 18px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; }
+.nav button:disabled { opacity: .35; cursor: default; }
+.nav button:not(:disabled):hover { background: var(--color-background-secondary); }
+.dots { display: flex; gap: 5px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-border-secondary); }
+.dot.on { background: #7F77DD; }
+.ctr { font-size: 12px; color: var(--color-text-secondary); margin-left: auto; }
+</style>
+
+<h2 class="sr-only">Step-by-step animation of getNewsFeed using a max-heap k-way merge across three users' tweet lists</h2>
+
+<div class="wrap">
+  <div class="explain">
+    <span class="lbl" id="lbl">setup</span>
+    <span id="txt">User 1 follows users 2 and 3. We seed the heap with each user's latest tweet by timestamp.</span>
+  </div>
+  <div class="panels">
+    <div class="col">
+      <div class="col-title">Max-heap (pq)</div>
+      <div class="heap-box" id="heap"></div>
+    </div>
+    <div class="col">
+      <div class="col-title">Result (top 10)</div>
+      <div class="result-box" id="result"></div>
+    </div>
+  </div>
+  <div class="nav">
+    <button id="prev" onclick="go(-1)">← Prev</button>
+    <div class="dots" id="dots"></div>
+    <button id="next" onclick="go(1)">Next →</button>
+    <span class="ctr" id="ctr"></span>
+  </div>
+</div>
+
+<script>
+const tweets = {
+  1: [{id:'t5', time:5}],
+  2: [{id:'t3', time:3},{id:'t7', time:7}],
+  3: [{id:'t1', time:1},{id:'t9', time:9}]
+};
+
+const steps = [
+  {
+    lbl: 'step 0 — seed the heap',
+    txt: 'For self (user 1) and each followee (2, 3), push their LATEST tweet by timestamp. Heap holds at most (followees+1) items.',
+    heap: [{id:'t9',time:9,user:3,idx:1},{id:'t7',time:7,user:2,idx:1},{id:'t5',time:5,user:1,idx:0}],
+    result: []
+  },
+  {
+    lbl: 'step 1 — pop t9 (time 9)',
+    txt: 'Heap top is t9 (time=9) from user 3. Pop it, add to result. User 3 has an older tweet (t1, time=1) — push it.',
+    heap: [{id:'t7',time:7,user:2,idx:1},{id:'t5',time:5,user:1,idx:0},{id:'t1',time:1,user:3,idx:0}],
+    result: ['t9']
+  },
+  {
+    lbl: 'step 2 — pop t7 (time 7)',
+    txt: 'Heap top is t7 (time=7) from user 2. Pop it, add to result. User 2 has an older tweet (t3, time=3) — push it.',
+    heap: [{id:'t5',time:5,user:1,idx:0},{id:'t3',time:3,user:2,idx:0},{id:'t1',time:1,user:3,idx:0}],
+    result: ['t9','t7']
+  },
+  {
+    lbl: 'step 3 — pop t5 (time 5)',
+    txt: 'Heap top is t5 (time=5) from user 1 (self). Pop it, add to result. User 1 has no older tweets — nothing to push.',
+    heap: [{id:'t3',time:3,user:2,idx:0},{id:'t1',time:1,user:3,idx:0}],
+    result: ['t9','t7','t5']
+  },
+  {
+    lbl: 'step 4 — pop t3 (time 3)',
+    txt: 'Heap top is t3 (time=3) from user 2. Pop it, add to result. User 2 has no older tweets.',
+    heap: [{id:'t1',time:1,user:3,idx:0}],
+    result: ['t9','t7','t5','t3']
+  },
+  {
+    lbl: 'step 5 — pop t1 (time 1)',
+    txt: 'Heap top is t1 (time=1) from user 3. Pop it, add to result. User 3 has no older tweets.',
+    heap: [],
+    result: ['t9','t7','t5','t3','t1']
+  },
+  {
+    lbl: 'done — heap empty',
+    txt: 'All 5 tweets across all users have been merged in order. Result = [t9, t7, t5, t3, t1] — the news feed, most recent first. With more tweets, this stops at 10.',
+    heap: [],
+    result: ['t9','t7','t5','t3','t1']
+  }
+];
+
+let cur = 0;
+
+function render() {
+  const s = steps[cur];
+  document.getElementById('lbl').textContent = s.lbl;
+  document.getElementById('txt').textContent = s.txt;
+
+  const heapEl = document.getElementById('heap');
+  if (s.heap.length === 0) {
+    heapEl.innerHTML = '<span class="empty">empty</span>';
+  } else {
+    heapEl.innerHTML = s.heap.map((item, i) =>
+      `<div class="heap-item${i===0?' top':''}"><span>${item.id}</span><span>time=${item.time} (user ${item.user})</span></div>`
+    ).join('');
+  }
+
+  const resultEl = document.getElementById('result');
+  if (s.result.length === 0) {
+    resultEl.innerHTML = '<span class="empty">empty</span>';
+  } else {
+    resultEl.innerHTML = s.result.map(id => `<span class="result-pill">${id}</span>`).join('');
+  }
+
+  document.getElementById('dots').innerHTML = steps.map((_,i)=>`<div class="dot${i===cur?' on':''}"></div>`).join('');
+  document.getElementById('prev').disabled = cur===0;
+  document.getElementById('next').disabled = cur===steps.length-1;
+  document.getElementById('ctr').textContent = `${cur+1} / ${steps.length}`;
+}
+
+function go(d) { cur = Math.max(0,Math.min(steps.length-1,cur+d)); render(); }
+render();
+</script>
