@@ -1,0 +1,206 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.step-dots { display:flex; gap:6px; justify-content:center; margin-bottom:16px; }
+.dot { width:8px; height:8px; border-radius:50%; background:var(--color-border-secondary); transition:background .2s; }
+.dot.active { background:var(--color-text-primary); }
+.nav { display:flex; gap:10px; justify-content:center; margin-top:16px; }
+button { font-size:13px; padding:6px 16px; border-radius:var(--border-radius-md); border:0.5px solid var(--color-border-secondary); background:transparent; color:var(--color-text-primary); cursor:pointer; }
+button:hover { background:var(--color-background-secondary); }
+button:disabled { opacity:.35; cursor:default; }
+.label { font-size:12px; fill:var(--color-text-secondary); font-family:var(--font-sans); }
+.val { font-size:13px; font-weight:500; fill:var(--color-text-primary); font-family:var(--font-sans); }
+.callout { font-size:12px; fill:var(--color-text-secondary); font-family:var(--font-mono); }
+.serial-box { background:var(--color-background-secondary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); padding:8px 12px; font-size:12px; font-family:var(--font-mono); color:var(--color-text-secondary); margin-top:8px; word-break:break-all; }
+.serial-box b { color:var(--color-text-primary); font-weight:500; }
+.map-row { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--color-text-secondary); padding:4px 0; border-bottom:0.5px solid var(--color-border-tertiary); }
+.map-row:last-child { border-bottom:none; }
+.badge { font-size:11px; padding:2px 8px; border-radius:var(--border-radius-md); background:var(--color-background-success); color:var(--color-text-success); margin-left:auto; }
+.badge-dup { background:var(--color-background-danger); color:var(--color-text-danger); }
+.desc { font-size:13px; color:var(--color-text-secondary); line-height:1.6; min-height:52px; }
+</style>
+
+<h2 class="sr-only">Find Duplicate Subtrees — step-by-step visualization</h2>
+
+<div style="padding:1rem 0">
+  <div class="step-dots" id="dots"></div>
+
+  <svg width="100%" viewBox="0 0 680 230" id="tree-svg">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+    <!-- Edges -->
+    <line x1="340" y1="44" x2="220" y2="104" stroke="var(--color-border-secondary)" stroke-width="0.5"/>
+    <line x1="340" y1="44" x2="460" y2="104" stroke="var(--color-border-secondary)" stroke-width="0.5"/>
+    <line x1="220" y1="124" x2="150" y2="174" stroke="var(--color-border-secondary)" stroke-width="0.5"/>
+    <line x1="220" y1="124" x2="290" y2="174" stroke="var(--color-border-secondary)" stroke-width="0.5"/>
+    <line x1="460" y1="124" x2="390" y2="174" stroke="var(--color-border-secondary)" stroke-width="0.5"/>
+    <line x1="460" y1="124" x2="530" y2="174" stroke="var(--color-border-secondary)" stroke-width="0.5"/>
+    <!-- Nodes (rendered by JS) -->
+    <g id="nodes"></g>
+  </svg>
+
+  <div id="desc" class="desc" style="margin-bottom:10px;padding:0 4px"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+    <div>
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Current serialization</div>
+      <div class="serial-box" id="serial-box">—</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Map state</div>
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 12px;" id="map-box">
+        <div class="map-row" style="color:var(--color-text-tertiary);border-bottom:0.5px solid var(--color-border-tertiary);padding-bottom:4px;margin-bottom:4px;font-size:11px">key → count</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button id="prev" onclick="go(-1)" disabled>← prev</button>
+    <button id="next" onclick="go(1)">next →</button>
+  </div>
+</div>
+
+<script>
+const nodes = [
+  { id:'r',  val:1, cx:340, cy:34  },
+  { id:'l',  val:2, cx:220, cy:114 },
+  { id:'r2', val:3, cx:460, cy:114 },
+  { id:'ll', val:4, cx:150, cy:184 },
+  { id:'lr', val:2, cx:290, cy:184 },
+  { id:'rl', val:4, cx:390, cy:184 },
+  { id:'rr', val:2, cx:530, cy:184 },
+];
+const R = 18;
+
+const steps = [
+  {
+    active: ['ll'],
+    serial: '(#,4,#)',
+    map: { '(#,4,#)':1 },
+    desc: 'Post-order: visit left subtree first. Node 4 (leaf) → serialize as <b>(#,4,#)</b>. First time seeing this, map[key]=1.',
+    result: []
+  },
+  {
+    active: ['lr'],
+    serial: '(#,2,#)',
+    map: { '(#,4,#)':1, '(#,2,#)':1 },
+    desc: 'Node 2 at bottom-left (leaf) → serialize as <b>(#,2,#)</b>. First time, map[key]=1.',
+    result: []
+  },
+  {
+    active: ['l'],
+    serial: '((#,4,#),2,(#,2,#))',
+    map: { '(#,4,#)':1, '(#,2,#)':1, '((#,4,#),2,(#,2,#))':1 },
+    desc: 'Node 2 (middle-left): left child serialized to <b>(#,4,#)</b>, right to <b>(#,2,#)</b>. Combined: <b>((#,4,#),2,(#,2,#))</b>. First occurrence.',
+    result: []
+  },
+  {
+    active: ['rl'],
+    serial: '(#,4,#)',
+    map: { '(#,4,#)':2, '(#,2,#)':1, '((#,4,#),2,(#,2,#))':1 },
+    desc: 'Node 4 (bottom-right subtree, leaf) → same serial <b>(#,4,#)</b>. Count goes to 2 → duplicate! Add node 4 to result.',
+    result: ['rl'],
+    dup: '(#,4,#)'
+  },
+  {
+    active: ['rr'],
+    serial: '(#,2,#)',
+    map: { '(#,4,#)':2, '(#,2,#)':2, '((#,4,#),2,(#,2,#))':1 },
+    desc: 'Node 2 (bottom-right, leaf) → same serial <b>(#,2,#)</b>. Count goes to 2 → duplicate! Add node 2 to result.',
+    result: ['rl','rr'],
+    dup: '(#,2,#)'
+  },
+  {
+    active: ['r2'],
+    serial: '((#,4,#),3,(#,2,#))',
+    map: { '(#,4,#)':2, '(#,2,#)':2, '((#,4,#),2,(#,2,#))':1, '((#,4,#),3,(#,2,#))':1 },
+    desc: 'Node 3: left=<b>(#,4,#)</b>, right=<b>(#,2,#)</b>. Combined: <b>((#,4,#),3,(#,2,#))</b>. First occurrence.',
+    result: ['rl','rr']
+  },
+  {
+    active: ['r'],
+    serial: '(((#,4,#),2,(#,2,#)),1,((#,4,#),3,(#,2,#)))',
+    map: { '(#,4,#)':2, '(#,2,#)':2, '((#,4,#),2,(#,2,#))':1, '((#,4,#),3,(#,2,#))':1, '(...)':1 },
+    desc: 'Root node 1: combines both subtrees. Unique. Done! Result: subtrees rooted at 4 and 2 are each duplicated.',
+    result: ['rl','rr'],
+    final: true
+  }
+];
+
+let cur = 0;
+const TOTAL = steps.length;
+
+const svgNS = 'http://www.w3.org/2000/svg';
+function mkNode(n, fillClass, strokeColor) {
+  const g = document.createElementNS(svgNS,'g');
+  const c = document.createElementNS(svgNS,'circle');
+  c.setAttribute('cx', n.cx); c.setAttribute('cy', n.cy); c.setAttribute('r', R);
+  c.setAttribute('fill', fillClass);
+  c.setAttribute('stroke', strokeColor);
+  c.setAttribute('stroke-width','1');
+  const t = document.createElementNS(svgNS,'text');
+  t.setAttribute('x', n.cx); t.setAttribute('y', n.cy);
+  t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','central');
+  t.setAttribute('class','val');
+  t.textContent = n.val;
+  g.appendChild(c); g.appendChild(t);
+  return g;
+}
+
+function render() {
+  const s = steps[cur];
+  const ng = document.getElementById('nodes');
+  ng.innerHTML = '';
+  nodes.forEach(n => {
+    const isActive = s.active.includes(n.id);
+    const isResult = (s.result||[]).includes(n.id);
+    let fill = 'var(--color-background-primary)';
+    let stroke = 'var(--color-border-secondary)';
+    if (isResult) { fill='var(--color-background-danger)'; stroke='var(--color-text-danger)'; }
+    else if (isActive) { fill='var(--color-background-info)'; stroke='var(--color-text-info)'; }
+    ng.appendChild(mkNode(n, fill, stroke));
+  });
+
+  // serial box
+  const sb = document.getElementById('serial-box');
+  const key = s.serial;
+  sb.innerHTML = key ? `<b style="color:var(--color-text-primary)">${key}</b>` : '—';
+
+  // map box
+  const mb = document.getElementById('map-box');
+  mb.innerHTML = `<div class="map-row" style="color:var(--color-text-tertiary);border-bottom:0.5px solid var(--color-border-tertiary);padding-bottom:4px;margin-bottom:4px;font-size:11px">key → count</div>`;
+  Object.entries(s.map).forEach(([k,v]) => {
+    const row = document.createElement('div');
+    row.className = 'map-row';
+    const isNew = k === key;
+    const isDup = v >= 2;
+    row.innerHTML = `<span style="font-family:var(--font-mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px" title="${k}">${k}</span>
+      <span style="color:var(--color-text-primary);font-weight:500;margin-left:4px">${v}</span>
+      ${isDup ? `<span class="badge badge-dup">dup</span>` : `<span class="badge" style="background:transparent;color:var(--color-text-tertiary);border:0.5px solid var(--color-border-tertiary)">ok</span>`}`;
+    mb.appendChild(row);
+  });
+
+  // desc
+  document.getElementById('desc').innerHTML = s.desc;
+
+  // dots
+  const dc = document.getElementById('dots');
+  dc.innerHTML = '';
+  for(let i=0;i<TOTAL;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i===cur?' active':'');
+    dc.appendChild(d);
+  }
+
+  document.getElementById('prev').disabled = cur===0;
+  document.getElementById('next').disabled = cur===TOTAL-1;
+  document.getElementById('next').textContent = cur===TOTAL-1 ? 'done ✓' : 'next →';
+}
+
+function go(dir) { cur = Math.max(0,Math.min(TOTAL-1, cur+dir)); render(); }
+render();
+</script>
