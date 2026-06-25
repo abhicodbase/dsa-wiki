@@ -1,0 +1,120 @@
+
+<h2 class="sr-only">Jump Game II — greedy step-by-step walkthrough showing minimum jumps to reach the end</h2>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+  <div style="font-size:13px;color:var(--color-text-secondary);" id="step-label">Step 1</div>
+  <div style="display:flex;gap:8px;">
+    <button id="prev-btn"><i class="ti ti-arrow-left" aria-hidden="true"></i> Prev</button>
+    <button id="next-btn">Next <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+  </div>
+</div>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--color-text-secondary);">
+  <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--color-background-info);border:0.5px solid var(--color-border-info);display:inline-block;"></span>current position</span>
+  <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--color-background-success);border:0.5px solid var(--color-border-success);display:inline-block;"></span>reachable from current jump</span>
+  <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);display:inline-block;"></span>current jump boundary</span>
+  <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);display:inline-block;"></span>visited / past</span>
+</div>
+
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;" id="cells-row"></div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center;">
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;">jumps taken</div>
+    <div style="font-size:22px;font-weight:500;" id="stat-jumps">0</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center;">
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;">current boundary</div>
+    <div style="font-size:22px;font-weight:500;" id="stat-bound">0</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center;">
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;">farthest reachable</div>
+    <div style="font-size:22px;font-weight:500;" id="stat-far">0</div>
+  </div>
+</div>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;font-size:13px;line-height:1.8;min-height:80px;" id="explain-box"></div>
+
+<script>
+const nums = [2,3,1,1,4];
+const n = nums.length;
+
+const steps = [];
+let jumps = 0, curEnd = 0, farthest = 0;
+
+steps.push({
+  i: -1, jumps: 0, curEnd: 0, farthest: 0,
+  msg: `<strong>Problem:</strong> nums = [${nums}]. Each value tells you the <em>maximum</em> steps you can jump from that index. Find the <strong>minimum number of jumps</strong> to reach the last index.<br>
+<strong>Greedy idea:</strong> At each position we track the farthest we <em>could</em> reach. When we hit the boundary of the current jump, we <em>must</em> jump — and that's one more jump. We never need to try all combinations.`
+});
+
+for (let i = 0; i < n - 1; i++) {
+  farthest = Math.max(farthest, i + nums[i]);
+  const hitBoundary = (i === curEnd);
+  if (hitBoundary) {
+    jumps++;
+    const oldEnd = curEnd;
+    curEnd = farthest;
+    steps.push({
+      i, jumps, curEnd, farthest,
+      boundary: true, oldEnd,
+      msg: `<strong>Index ${i}</strong> (value=${nums[i]}): farthest we can reach = max(prev, ${i}+${nums[i]}) = <strong>${farthest}</strong>.<br>
+We just hit the boundary of jump ${jumps-1} (was at index ${oldEnd}). <strong>Time to jump!</strong> Jumps = ${jumps}. New boundary = ${curEnd}.`
+    });
+  } else {
+    steps.push({
+      i, jumps, curEnd, farthest,
+      boundary: false,
+      msg: `<strong>Index ${i}</strong> (value=${nums[i]}): from here we can reach up to index ${i+nums[i]}. Farthest so far = max(${farthest}, ${i}+${nums[i]}) = <strong>${Math.max(farthest, i+nums[i])}</strong>. Still inside jump ${jumps} boundary (ends at index ${curEnd}), no new jump yet.`
+    });
+  }
+}
+
+steps.push({
+  i: n-1, jumps, curEnd, farthest,
+  done: true,
+  msg: `<strong>Reached the last index!</strong> We never need to jump from here. Total jumps = <strong>${jumps}</strong>.`
+});
+
+let idx = 0;
+
+function render() {
+  const s = steps[idx];
+  document.getElementById('step-label').textContent = `Step ${idx+1} of ${steps.length}`;
+  document.getElementById('explain-box').innerHTML = s.msg;
+  document.getElementById('stat-jumps').textContent = s.jumps;
+  document.getElementById('stat-bound').textContent = s.curEnd;
+  document.getElementById('stat-far').textContent = s.farthest;
+
+  const row = document.getElementById('cells-row');
+  row.innerHTML = '';
+
+  for (let i = 0; i < n; i++) {
+    const el = document.createElement('div');
+    let bg = 'var(--color-background-primary)';
+    let bd = 'var(--color-border-tertiary)';
+    let tc = 'var(--color-text-primary)';
+
+    if (s.done && i === n-1) {
+      bg = 'var(--color-background-success)'; bd = 'var(--color-border-success)'; tc = 'var(--color-text-success)';
+    } else if (i === s.i) {
+      bg = 'var(--color-background-info)'; bd = 'var(--color-border-info)'; tc = 'var(--color-text-info)';
+    } else if (s.i >= 0 && i === s.curEnd && i !== s.i) {
+      bg = 'var(--color-background-warning)'; bd = 'var(--color-border-warning)'; tc = 'var(--color-text-warning)';
+    } else if (s.i >= 0 && i > s.i && i <= s.farthest) {
+      bg = 'var(--color-background-success)'; bd = 'var(--color-border-success)'; tc = 'var(--color-text-success)';
+    } else if (s.i >= 0 && i < s.i) {
+      bg = 'var(--color-background-secondary)'; bd = 'var(--color-border-tertiary)'; tc = 'var(--color-text-secondary)';
+    }
+
+    el.style.cssText = `width:44px;min-height:52px;border-radius:var(--border-radius-md);border:0.5px solid ${bd};background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;`;
+    el.innerHTML = `<div style="font-size:10px;color:var(--color-text-tertiary);">i=${i}</div><div style="font-size:16px;font-weight:500;color:${tc};">${nums[i]}</div>`;
+    row.appendChild(el);
+  }
+}
+
+document.getElementById('prev-btn').addEventListener('click', ()=>{ idx=Math.max(0,idx-1); render(); });
+document.getElementById('next-btn').addEventListener('click', ()=>{ idx=Math.min(steps.length-1,idx+1); render(); });
+
+render();
+</script>

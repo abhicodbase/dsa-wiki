@@ -4,8 +4,8 @@
 
 - **Difficulty:** Medium
 - **Categories:** Array, Dynamic Programming, Greedy
-- **Time Complexity:** O(N^2)
-- **Space Complexity:** O(N)
+- **Time Complexity:** O(N)
+- **Space Complexity:** O(1)
 
 ---
 
@@ -72,12 +72,50 @@ int jump(vector<int>& nums) {
 
 ---
 
+## Approach 2: Greedy (BFS Range Extension)
+
+Instead of using a full DP array, we can track the maximum reachable range dynamically. We update the farthest reachable index at each step. When the iteration index reaches the current jump boundary `curEnd`, we increment the jump count and set the boundary to `farthest`.
+
+### Why the loop stops at `N - 2` (not `N - 1`)
+We never need to jump from the last index — just reach it. If we included $i = N - 1$ in the loop, we would increment jumps one extra time unnecessarily whenever `curEnd == N - 1`.
+
+### Trace on `[2, 3, 1, 1, 4]`
+
+| $i$ | `nums[i]` | `farthest` | $i ==$ `curEnd`? | `jumps` | `curEnd` |
+|---|---|---|---|---|---|
+| 0 | 2 | 2 | **yes** | 1 | 2 |
+| 1 | 3 | 4 | no | 1 | 2 |
+| 2 | 1 | 4 | **yes** | 2 | 4 |
+| 3 | 1 | 4 | no | 2 | 4 |
+
+**Loop ends. Answer = 2. ✓**
+
+```cpp
+// Simplified greedy range expansion logic
+int jump(vector<int>& nums) {
+    int jumps = 0, curEnd = 0, farthest = 0;
+    for (int i = 0; i < nums.size() - 1; i++) {
+        farthest = max(farthest, i + nums[i]);
+        if (i == curEnd) {
+            jumps++;
+            curEnd = farthest;
+        }
+    }
+    return jumps;
+}
+```
+
+---
+
 ## Complexity
 
-| | Value | Reason |
-|---|---|---|
-| **Time**  | O(N^2) | In the worst case (e.g. `nums` filled with values $\ge N$), we might check up to $O(N)$ forward indices for each of the $N$ steps. |
-| **Space** | O(N) | We allocate an auxiliary `dp` array of size $N$. |
+### Approach 1: BFS-Style DP
+- **Time Complexity:** $O(N^2)$ worst-case. In the worst case (e.g., all values $\ge N$), we might check up to $O(N)$ forward indices for each of the $N$ steps.
+- **Space Complexity:** $O(N)$ to allocate the `dp` array.
+
+### Approach 2: Greedy (Optimal)
+- **Time Complexity:** $O(N)$ since we perform a single linear pass over the array.
+- **Space Complexity:** $O(1)$ auxiliary space.
 
 ---
 
@@ -95,7 +133,8 @@ int jump(vector<int>& nums) {
 
 | File | Description |
 |---|---|
-| [`bfs-dp.cpp`](./bfs-dp.cpp) | Main C++ solution using BFS-style dynamic programming |
+| [`greedy.cpp`](./greedy.cpp) | Optimal O(N) time and O(1) space Greedy solution |
+| [`bfs-dp.cpp`](./bfs-dp.cpp) | BFS-style dynamic programming solution |
 | [`README.md`](./README.md) | Problem documentation and walkthrough |
 
 ---
