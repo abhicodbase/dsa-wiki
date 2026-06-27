@@ -23,7 +23,12 @@ Return the vertical order traversal of a binary tree's values. Nodes at the same
 
 ## Approach: DFS with (row, col) Annotation
 
-DFS assigning (row, col) to each node: root is at `(0, 0)`, left child is at `(row + 1, col - 1)`, and right child is at `(row + 1, col + 1)`. Group nodes by their column index, and then sort within each group by row index and node value. Finally, output column groups sorted from left to right.
+1. **DFS Traversal & Annotation**: We perform a Depth-First Search traversal, passing down `row` and `col` coordinate offsets for every node. The root is placed at `(0, 0)`. When moving left, we transition to `(row + 1, col - 1)`. When moving right, we transition to `(row + 1, col + 1)`.
+2. **Column Grouping**: We use a `std::map<int, vector<pair<int, int>>>` where the key represents the column index, and the value is a list of node configurations as `pair<row, node_value>`. Using a `std::map` guarantees that when we iterate over the map, columns are processed in sorted order from left to right.
+3. **Sorting within Columns**: For each column, we sort the elements. In C++, sorting a vector of `pair<int, int>` automatically resolves comparisons by:
+   - Primary: The first element (`row` value) in ascending order.
+   - Secondary (Tie-breaker): The second element (node value `val`) in ascending order.
+   This naturally handles the sorting constraint: nodes at the same `(col, row)` coordinate are sorted by value.
 
 ---
 
