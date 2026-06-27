@@ -1,0 +1,256 @@
+<h2 class="sr-only">Wiggle Sort II Step-by-Step Visualization</h2>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+  <div style="font-size:13px;color:var(--color-text-secondary);" id="step-label">Step 1</div>
+  <div style="display:flex;gap:8px;">
+    <button id="prev-btn" style="border:1px solid var(--color-border-secondary);padding:4px 8px;border-radius:4px;cursor:pointer;background:none;color:var(--color-text-secondary);"><i class="ti ti-arrow-left" aria-hidden="true"></i> Prev</button>
+    <button id="next-btn" style="border:1px solid var(--color-border-secondary);padding:4px 8px;border-radius:4px;cursor:pointer;background:none;color:var(--color-text-secondary);">Next <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+  </div>
+</div>
+
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--color-text-secondary);">
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:2px;background:#e0f2fe;border:0.5px solid #0284c7;display:inline-block;"></span>Smaller Half (v[0...mid])</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:2px;background:#eaf3de;border:0.5px solid #276749;display:inline-block;"></span>Larger Half (v[mid+1...end])</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:2px;background:#fee2e2;border:0.5px solid #b91c1c;display:inline-block;"></span>Currently Placing</span>
+</div>
+
+<svg id="visualizer-svg" viewBox="0 0 600 240" style="width:100%;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);margin-bottom:12px;background:var(--color-background-primary);"></svg>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;font-size:13px;line-height:1.8;min-height:76px;" id="explain-box"></div>
+
+<script>
+const original = [1, 5, 1, 1, 6, 4];
+const sorted = [1, 1, 1, 4, 5, 6];
+const n = original.length;
+const midVal = Math.floor((n - 1) / 2); // mid = 2
+
+// Build the trace steps
+const steps = [];
+
+// Step 0: Initial
+steps.push({
+  phase: "initial",
+  nums: [...original],
+  v: [...sorted],
+  midPointer: midVal,
+  endPointer: n - 1,
+  targetIdx: -1,
+  msg: "<strong>Start State.</strong> We copy the original array <code>nums</code> to <code>v</code> and sort it. <code>v = [1, 1, 1, 4, 5, 6]</code>. We partition it into two halves:<br>• <strong>Left (Smaller) Half</strong>: indices 0 to 2 (containing <code>[1, 1, 1]</code>)<br>• <strong>Right (Larger) Half</strong>: indices 3 to 5 (containing <code>[4, 5, 6]</code>)."
+});
+
+let currentNums = Array(n).fill(null);
+let midPtr = midVal;
+let endPtr = n - 1;
+
+for (let i = 0; i < n; i++) {
+  const isEven = (i % 2 === 0);
+  const sourceVal = isEven ? sorted[midPtr] : sorted[endPtr];
+  const sourceFrom = isEven ? `Smaller Half (mid pointer at index ${midPtr})` : `Larger Half (end pointer at index ${endPtr})`;
+  
+  if (isEven) {
+    currentNums[i] = sorted[midPtr];
+    midPtr--;
+  } else {
+    currentNums[i] = sorted[endPtr];
+    endPtr--;
+  }
+
+  steps.push({
+    phase: "place",
+    nums: [...currentNums],
+    v: [...sorted],
+    midPointer: midPtr,
+    endPointer: endPtr,
+    targetIdx: i,
+    msg: `<strong>Step ${i + 1}: Place at index ${i} (Even? ${isEven ? 'Yes' : 'No'}).</strong><br>We pull value <code>${sourceVal}</code> from the ${sourceFrom}.<br>Placing in reverse order helps ensure duplicates of the median value are spaced apart.`
+  });
+}
+
+steps.push({
+  phase: "done",
+  nums: [...currentNums],
+  v: [...sorted],
+  midPointer: midPtr,
+  endPointer: endPtr,
+  targetIdx: -1,
+  msg: "<strong>Completed!</strong> All elements placed. Notice that the strict inequality check <code>nums[0] < nums[1] > nums[2] < nums[3] > nums[4] < nums[5]</code> is satisfied: <code>1 < 6 > 1 < 5 > 1 < 4</code>."
+});
+
+let idx = 0;
+
+function draw() {
+  const svg = document.getElementById("visualizer-svg");
+  svg.innerHTML = '';
+  
+  const step = steps[idx];
+  document.getElementById("step-label").textContent = `Step ${idx + 1} of ${steps.length}`;
+  document.getElementById("explain-box").innerHTML = step.msg;
+
+  const cardW = 45;
+  const cardH = 45;
+  const startX = 60;
+  
+  // 1. Draw Sorted Array v (the source)
+  const sourceY = 50;
+  const txtSource = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  txtSource.setAttribute("x", startX - 10);
+  txtSource.setAttribute("y", sourceY + 28);
+  txtSource.setAttribute("font-size", "12");
+  txtSource.setAttribute("font-weight", "bold");
+  txtSource.setAttribute("fill", "var(--color-text-secondary)");
+  txtSource.setAttribute("text-anchor", "end");
+  txtSource.textContent = "Sorted v:";
+  svg.appendChild(txtSource);
+
+  for (let i = 0; i < n; i++) {
+    const x = startX + i * 65;
+    const isSmaller = i <= midVal;
+    
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", x);
+    rect.setAttribute("y", sourceY);
+    rect.setAttribute("width", cardW);
+    rect.setAttribute("height", cardH);
+    rect.setAttribute("rx", "4");
+    
+    // Color code partitions
+    if (isSmaller) {
+      rect.setAttribute("fill", "#e0f2fe");
+      rect.setAttribute("stroke", "#0284c7");
+    } else {
+      rect.setAttribute("fill", "#eaf3de");
+      rect.setAttribute("stroke", "#276749");
+    }
+    
+    // Highlight currently chosen source node
+    if (step.phase === "place") {
+      const isEven = (step.targetIdx % 2 === 0);
+      if (isEven && i === step.midPointer + 1) {
+        rect.setAttribute("stroke", "#b91c1c");
+        rect.setAttribute("stroke-width", "2");
+      } else if (!isEven && i === step.endPointer + 1) {
+        rect.setAttribute("stroke", "#b91c1c");
+        rect.setAttribute("stroke-width", "2");
+      }
+    }
+    
+    svg.appendChild(rect);
+
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", x + cardW / 2);
+    txt.setAttribute("y", sourceY + 27);
+    txt.setAttribute("font-size", "14");
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("fill", "var(--color-text-primary)");
+    txt.textContent = step.v[i];
+    svg.appendChild(txt);
+    
+    const idxTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    idxTxt.setAttribute("x", x + cardW / 2);
+    idxTxt.setAttribute("y", sourceY + 42);
+    idxTxt.setAttribute("font-size", "9");
+    idxTxt.setAttribute("text-anchor", "middle");
+    idxTxt.setAttribute("fill", "var(--color-text-tertiary)");
+    idxTxt.textContent = `i=${i}`;
+    svg.appendChild(idxTxt);
+  }
+
+  // Draw pointers (midPointer and endPointer)
+  const drawPointer = (index, label, color) => {
+    if (index < 0 || index >= n) return;
+    const x = startX + index * 65 + cardW / 2;
+    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    arrow.setAttribute("d", `M ${x} ${sourceY - 5} L ${x - 5} ${sourceY - 15} L ${x + 5} ${sourceY - 15} Z`);
+    arrow.setAttribute("fill", color);
+    svg.appendChild(arrow);
+
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", x);
+    txt.setAttribute("y", sourceY - 20);
+    txt.setAttribute("font-size", "10");
+    txt.setAttribute("font-weight", "bold");
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("fill", color);
+    txt.textContent = label;
+    svg.appendChild(txt);
+  };
+
+  if (step.phase !== "done") {
+    drawPointer(step.midPointer, "mid", "#0284c7");
+    drawPointer(step.endPointer, "end", "#276749");
+  }
+
+  // 2. Draw Target Array nums
+  const targetY = 150;
+  const txtTarget = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  txtTarget.setAttribute("x", startX - 10);
+  txtTarget.setAttribute("y", targetY + 28);
+  txtTarget.setAttribute("font-size", "12");
+  txtTarget.setAttribute("font-weight", "bold");
+  txtTarget.setAttribute("fill", "var(--color-text-secondary)");
+  txtTarget.setAttribute("text-anchor", "end");
+  txtTarget.textContent = "Result nums:";
+  svg.appendChild(txtTarget);
+
+  for (let i = 0; i < n; i++) {
+    const x = startX + i * 65;
+    const isTarget = i === step.targetIdx;
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", x);
+    rect.setAttribute("y", targetY);
+    rect.setAttribute("width", cardW);
+    rect.setAttribute("height", cardH);
+    rect.setAttribute("rx", "4");
+
+    if (isTarget) {
+      rect.setAttribute("fill", "#fee2e2");
+      rect.setAttribute("stroke", "#b91c1c");
+      rect.setAttribute("stroke-width", "2");
+    } else {
+      rect.setAttribute("fill", "var(--color-background-secondary)");
+      rect.setAttribute("stroke", "var(--color-border-secondary)");
+    }
+    svg.appendChild(rect);
+
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", x + cardW / 2);
+    txt.setAttribute("y", targetY + 27);
+    txt.setAttribute("font-size", "14");
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("fill", "var(--color-text-primary)");
+    txt.textContent = step.nums[i] !== null ? step.nums[i] : "";
+    svg.appendChild(txt);
+
+    const idxTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    idxTxt.setAttribute("x", x + cardW / 2);
+    idxTxt.setAttribute("y", targetY + 42);
+    idxTxt.setAttribute("font-size", "9");
+    idxTxt.setAttribute("text-anchor", "middle");
+    idxTxt.setAttribute("fill", "var(--color-text-tertiary)");
+    idxTxt.textContent = `i=${i}`;
+    svg.appendChild(idxTxt);
+  }
+
+  // 3. Draw arrow if transferring
+  if (step.phase === "place") {
+    const isEven = (step.targetIdx % 2 === 0);
+    const sourceIdx = isEven ? step.midPointer + 1 : step.endPointer + 1;
+    const startXArrow = startX + sourceIdx * 65 + cardW / 2;
+    const endXArrow = startX + step.targetIdx * 65 + cardW / 2;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const d = `M ${startXArrow} ${sourceY + cardH} C ${startXArrow} ${sourceY + cardH + 20}, ${endXArrow} ${targetY - 20}, ${endXArrow} ${targetY}`;
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "#b91c1c");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("stroke-dasharray", "4 2");
+    svg.appendChild(path);
+  }
+}
+
+document.getElementById('prev-btn').addEventListener('click', () => { idx = Math.max(0, idx - 1); draw(); });
+document.getElementById('next-btn').addEventListener('click', () => { idx = Math.min(steps.length - 1, idx + 1); draw(); });
+draw();
+</script>
