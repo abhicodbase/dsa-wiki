@@ -32,6 +32,23 @@ Return the vertical order traversal of a binary tree's values. Nodes at the same
 
 ---
 
+## Files
+
+| File | Description |
+| :--- | :--- |
+| [`dfs_with_map.cpp`](./dfs_with_map.cpp) | DFS solution utilizing `std::map` to group coordinates and `std::sort` for row/value ranking |
+| [`vertical_order_traversal.html`](./vertical_order_traversal.html) | Interactive step-by-step tree traversal and column bucket visualization |
+
+### Interactive Demo (`vertical_order_traversal.html`)
+
+An embeddable, step-by-step visual demonstration of the vertical traversal:
+- The **active node** during Depth-First Search (DFS) traversal.
+- The **(row, col) coordinates** computed at each tree node.
+- The **column lanes** mapping col indices to visual buckets.
+- The **step-by-step column state** showing how values are grouped and sorted.
+
+---
+
 ## Learn More
 - [NeetCode](https://neetcode.io/problems/vertical-order-traversal-of-a-binary-tree)
 - [LeetCode](https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree/)
