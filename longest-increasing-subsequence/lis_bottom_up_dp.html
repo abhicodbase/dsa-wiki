@@ -1,0 +1,162 @@
+
+<h2 class="sr-only">Longest Increasing Subsequence — bottom-up DP step-by-step showing how dp[i] is computed by scanning all j less than i and updating when nums[j] less than nums[i]</h2>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+  <div style="font-size:13px;color:var(--color-text-secondary);" id="step-label">Step 1</div>
+  <div style="display:flex;gap:8px;">
+    <button id="prev-btn"><i class="ti ti-arrow-left" aria-hidden="true"></i> Prev</button>
+    <button id="next-btn">Next <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+  </div>
+</div>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--color-text-secondary);">
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--color-background-info);border:0.5px solid var(--color-border-info);display:inline-block;"></span>i (target)</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);display:inline-block;"></span>j (scanning)</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--color-background-success);border:0.5px solid var(--color-border-success);display:inline-block;"></span>dp updated</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);display:inline-block;"></span>finalized</span>
+</div>
+
+<div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px;margin-bottom:12px;">
+  <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:8px;">nums array</div>
+  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;" id="nums-row"></div>
+  <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:8px;">dp[i] = length of LIS ending at index i</div>
+  <div style="display:flex;gap:5px;flex-wrap:wrap;" id="dp-row"></div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px;">
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center;">
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;">current i</div>
+    <div style="font-size:22px;font-weight:500;color:var(--color-text-info);" id="stat-i">—</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center;">
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;">current j</div>
+    <div style="font-size:22px;font-weight:500;color:var(--color-text-warning);" id="stat-j">—</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center;">
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;">answer so far</div>
+    <div style="font-size:22px;font-weight:500;color:var(--color-text-success);" id="stat-ans">1</div>
+  </div>
+</div>
+
+<div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px;margin-bottom:12px;">
+  <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:8px;">comparison at current step</div>
+  <div id="cmp-panel" style="font-size:13px;line-height:1.8;color:var(--color-text-secondary);">—</div>
+</div>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;font-size:13px;line-height:1.8;min-height:70px;" id="explain-box"></div>
+
+<script>
+const nums = [10,9,2,5,3,7,101,18];
+const n = nums.length;
+
+function buildSteps() {
+  const steps = [];
+  const dp = new Array(n).fill(1);
+  let ans = 1;
+
+  steps.push({
+    dp: [...dp], i: -1, j: -1, ans,
+    phase: 'init',
+    msg: `<strong>Init.</strong> dp[i] = length of LIS ending exactly at index i. Every element alone is a subsequence of length 1, so all dp[i] = 1 to start.`
+  });
+
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      const canExtend = nums[j] < nums[i];
+      const newVal = dp[j] + 1;
+      const willUpdate = canExtend && newVal > dp[i];
+      if (willUpdate) dp[i] = newVal;
+      ans = Math.max(ans, dp[i]);
+      steps.push({
+        dp: [...dp], i, j, ans,
+        phase: 'compare',
+        canExtend, newVal: dp[j] + 1, willUpdate,
+        msg: canExtend
+          ? willUpdate
+            ? `nums[${j}]=${nums[j]} &lt; nums[${i}]=${nums[i]} ✓ and dp[${j}]+1=${dp[j]+1} &gt; dp[${i}]=${dp[i]-0} before update → <strong>dp[${i}] updated to ${dp[i]}</strong>.`
+            : `nums[${j}]=${nums[j]} &lt; nums[${i}]=${nums[i]} ✓ but dp[${j}]+1=${dp[j]+1} is not better than dp[${i}]=${dp[i]} → no update.`
+          : `nums[${j}]=${nums[j]} >= nums[${i}]=${nums[i]} — not increasing, skip.`
+      });
+    }
+    steps.push({
+      dp: [...dp], i, j: -2, ans,
+      phase: 'finalize',
+      msg: `<strong>dp[${i}] finalized = ${dp[i]}.</strong> The longest increasing subsequence ending at index ${i} (value ${nums[i]}) has length ${dp[i]}. Answer so far = ${ans}.`
+    });
+  }
+
+  steps.push({
+    dp: [...dp], i: -1, j: -1, ans,
+    phase: 'done',
+    msg: `<strong>Done.</strong> Answer = max of all dp values = <strong>${ans}</strong>. One valid LIS: [2, 3, 7, 18] or [2, 5, 7, 18] (length 4).`
+  });
+
+  return steps;
+}
+
+const steps = buildSteps();
+let idx = 0;
+
+function makeNumCell(val, index, state) {
+  let bg='var(--color-background-primary)', bd='var(--color-border-tertiary)', tc='var(--color-text-primary)';
+  if (state==='i')        { bg='var(--color-background-info)';    bd='var(--color-border-info)';    tc='var(--color-text-info)'; }
+  if (state==='j')        { bg='var(--color-background-warning)'; bd='var(--color-border-warning)'; tc='var(--color-text-warning)'; }
+  if (state==='done')     { bg='var(--color-background-secondary)'; tc='var(--color-text-secondary)'; }
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+    <div style="font-size:10px;color:var(--color-text-tertiary);">[${index}]</div>
+    <div style="min-width:38px;height:38px;border-radius:var(--border-radius-md);border:0.5px solid ${bd};background:${bg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:${tc};">${val}</div>
+  </div>`;
+}
+
+function makeDpCell(val, index, state) {
+  let bg='var(--color-background-primary)', bd='var(--color-border-tertiary)', tc='var(--color-text-primary)';
+  if (state==='i')        { bg='var(--color-background-info)';    bd='var(--color-border-info)';    tc='var(--color-text-info)'; }
+  if (state==='updated')  { bg='var(--color-background-success)'; bd='var(--color-border-success)'; tc='var(--color-text-success)'; }
+  if (state==='done')     { bg='var(--color-background-secondary)'; tc='var(--color-text-secondary)'; }
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+    <div style="font-size:10px;color:var(--color-text-tertiary);">dp[${index}]</div>
+    <div style="min-width:38px;height:38px;border-radius:var(--border-radius-md);border:0.5px solid ${bd};background:${bg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:${tc};">${val}</div>
+  </div>`;
+}
+
+function render() {
+  const s = steps[idx];
+  document.getElementById('step-label').textContent = `Step ${idx+1} of ${steps.length}`;
+  document.getElementById('explain-box').innerHTML = s.msg;
+  document.getElementById('stat-i').textContent = s.i >= 0 ? `${s.i} (${nums[s.i]})` : '—';
+  document.getElementById('stat-j').textContent = s.j >= 0 ? `${s.j} (${nums[s.j]})` : '—';
+  document.getElementById('stat-ans').textContent = s.ans;
+
+  let numsHtml = '', dpHtml = '';
+  for (let k = 0; k < n; k++) {
+    let nState = 'default', dState = 'default';
+    if (k < s.i) { nState = 'done'; dState = 'done'; }
+    if (k === s.i) { nState = 'i'; dState = s.willUpdate ? 'updated' : 'i'; }
+    if (k === s.j) nState = 'j';
+    numsHtml += makeNumCell(nums[k], k, nState);
+    dpHtml += makeDpCell(s.dp[k], k, dState);
+  }
+  document.getElementById('nums-row').innerHTML = numsHtml;
+  document.getElementById('dp-row').innerHTML = dpHtml;
+
+  const cmp = document.getElementById('cmp-panel');
+  if (s.phase === 'compare') {
+    const ok = s.canExtend;
+    cmp.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="padding:4px 10px;border-radius:var(--border-radius-md);background:var(--color-background-warning);color:var(--color-text-warning);font-weight:500;">nums[${s.j}] = ${nums[s.j]}</span>
+        <span style="color:var(--color-text-tertiary);">${ok ? '<' : '>='}</span>
+        <span style="padding:4px 10px;border-radius:var(--border-radius-md);background:var(--color-background-info);color:var(--color-text-info);font-weight:500;">nums[${s.i}] = ${nums[s.i]}</span>
+        <span style="color:${ok?'var(--color-text-success)':'var(--color-text-danger)'};">${ok ? '✓ increasing' : '✗ not increasing'}</span>
+        ${ok ? `<span style="color:var(--color-text-secondary);">dp[${s.j}]+1 = ${s.newVal} vs dp[${s.i}] = ${s.dp[s.i]}</span>
+        <span style="color:${s.willUpdate?'var(--color-text-success)':'var(--color-text-secondary)'};">${s.willUpdate?'→ update!':'→ no update'}</span>` : ''}
+      </div>`;
+  } else {
+    cmp.innerHTML = `<span style="color:var(--color-text-tertiary);">${s.phase === 'init' ? 'not started yet' : s.phase === 'finalize' ? `dp[${s.i}] locked in at ${s.dp[s.i]}` : 'complete'}</span>`;
+  }
+}
+
+document.getElementById('prev-btn').addEventListener('click',()=>{idx=Math.max(0,idx-1);render();});
+document.getElementById('next-btn').addEventListener('click',()=>{idx=Math.min(steps.length-1,idx+1);render();});
+render();
+</script>
