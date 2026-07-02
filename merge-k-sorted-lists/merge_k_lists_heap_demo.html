@@ -1,0 +1,190 @@
+
+<h2 class="sr-only">Merge K sorted lists using min-heap — step-by-step showing heap state, which node is extracted, how prev pointer relinks nodes in-place, and how the merged list grows</h2>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+  <div style="font-size:13px;color:var(--color-text-secondary);" id="step-label">Step 1</div>
+  <div style="display:flex;gap:8px;">
+    <button id="prev-btn"><i class="ti ti-arrow-left" aria-hidden="true"></i> Prev</button>
+    <button id="next-btn">Next <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+  </div>
+</div>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--color-text-secondary);">
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:50%;background:var(--color-background-danger);border:0.5px solid var(--color-border-danger);display:inline-block;"></span>extracted (min)</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:50%;background:var(--color-background-info);border:0.5px solid var(--color-border-info);display:inline-block;"></span>in heap (current heads)</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:50%;background:var(--color-background-success);border:0.5px solid var(--color-border-success);display:inline-block;"></span>merged into result</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:50%;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);display:inline-block;"></span>waiting</span>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px;">
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:10px;">input lists (heads advance as nodes are popped)</div>
+    <div id="lists-panel"></div>
+  </div>
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px;">
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:6px;">min-heap contents (size ≤ K=3)</div>
+    <div id="heap-panel" style="display:flex;gap:6px;flex-wrap:wrap;min-height:48px;align-items:center;margin-bottom:12px;"></div>
+    <div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:10px;">
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:6px;">head pointer / prev pointer</div>
+      <div id="ptr-panel" style="font-size:12px;color:var(--color-text-secondary);line-height:1.8;"></div>
+    </div>
+  </div>
+</div>
+
+<div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px;margin-bottom:12px;">
+  <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:8px;">merged result (in-place relinking, no new nodes)</div>
+  <div id="result-panel" style="display:flex;align-items:center;gap:0;flex-wrap:wrap;min-height:44px;"></div>
+</div>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;font-size:13px;line-height:1.8;min-height:76px;" id="explain-box"></div>
+
+<script>
+const lists = [[1,4,7],[2,5,8],[3,6,9]];
+const listColors = [
+  {bg:'var(--color-background-info)',    bd:'var(--color-border-info)',    tc:'var(--color-text-info)'},
+  {bg:'var(--color-background-warning)', bd:'var(--color-border-warning)', tc:'var(--color-text-warning)'},
+  {bg:'#EEEDFE',                          bd:'#AFA9EC',                      tc:'#534AB7'}
+];
+const listLabels = ['L0','L1','L2'];
+
+function simSteps() {
+  const steps = [];
+  const ptrs = [0,0,0];
+
+  let heap = [];
+  for (let i=0;i<lists.length;i++) {
+    if (lists[i].length>0) heap.push({val:lists[i][0],li:i,ni:0});
+  }
+  heap.sort((a,b)=>a.val-b.val);
+
+  steps.push({
+    ptrs:[...ptrs], heap:heap.map(h=>({...h})),
+    result:[], extracted:null, prevVal:null, headVal:null,
+    phase:'init',
+    msg:`<strong>Init.</strong> Push the head of every non-empty list into the min-heap. Heap now holds one node per list (K=3 nodes). The <code>head</code> and <code>prev</code> pointers are both null — the merged list is empty.`
+  });
+
+  const result = [];
+  let headVal = null, prevVal = null;
+
+  while (heap.length > 0) {
+    const node = heap.shift();
+    const oldPrev = prevVal;
+    const isFirst = headVal === null;
+    if (isFirst) headVal = node.val;
+    prevVal = node.val;
+    result.push({val:node.val, li:node.li});
+    ptrs[node.li] = node.ni + 1;
+
+    const nextNi = node.ni + 1;
+    let pushed = null;
+    if (nextNi < lists[node.li].length) {
+      pushed = {val:lists[node.li][nextNi], li:node.li, ni:nextNi};
+      heap.push(pushed);
+      heap.sort((a,b)=>a.val-b.val);
+    }
+
+    steps.push({
+      ptrs:[...ptrs], heap:heap.map(h=>({...h})),
+      result:[...result], extracted:{val:node.val,li:node.li},
+      prevVal, headVal,
+      phase:'extract', isFirst, pushed,
+      oldPrev,
+      msg: isFirst
+        ? `<strong>Extract min = ${node.val}</strong> from ${listLabels[node.li]}. <code>head == nullptr</code> → set <code>head = node(${node.val})</code>. Set <code>prev = node(${node.val})</code>.`
+          + (pushed ? ` Push next from ${listLabels[node.li]}: node(${pushed.val}) into heap.` : ` ${listLabels[node.li]} now exhausted.`)
+        : `<strong>Extract min = ${node.val}</strong> from ${listLabels[node.li]}. <code>prev→next = node(${node.val})</code> (relinks in-place, no new allocation). Advance <code>prev = node(${node.val})</code>.`
+          + (pushed ? ` Push next from ${listLabels[node.li]}: node(${pushed.val}) into heap.` : ` ${listLabels[node.li]} now exhausted.`)
+    });
+  }
+
+  steps.push({
+    ptrs:[3,3,3], heap:[],
+    result:[...result], extracted:null,
+    prevVal, headVal,
+    phase:'done',
+    msg:`<strong>Heap empty — done.</strong> Return <code>head</code> (points to node(${headVal})). Merged: ${result.map(r=>r.val).join(' → ')}. No extra nodes allocated — we only relinked existing <code>next</code> pointers.`
+  });
+
+  return steps;
+}
+
+const steps = simSteps();
+let idx = 0;
+
+function nodeEl(val, li, state) {
+  let bg='var(--color-background-primary)', bd='var(--color-border-tertiary)', tc='var(--color-text-primary)';
+  if (state==='heap')      { bg=listColors[li].bg; bd=listColors[li].bd; tc=listColors[li].tc; }
+  if (state==='extracted') { bg='var(--color-background-danger)'; bd='var(--color-border-danger)'; tc='var(--color-text-danger)'; }
+  if (state==='merged')    { bg='var(--color-background-success)'; bd='var(--color-border-success)'; tc='var(--color-text-success)'; }
+  if (state==='waiting')   { bg='var(--color-background-secondary)'; bd='var(--color-border-tertiary)'; tc='var(--color-text-secondary)'; }
+  return `<div style="min-width:36px;height:36px;border-radius:50%;border:0.5px solid ${bd};background:${bg};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:${tc};">${val}</div>`;
+}
+
+function arrow() {
+  return `<div style="display:flex;align-items:center;margin:0 2px;"><div style="width:16px;height:1px;background:var(--color-border-secondary);position:relative;"><div style="position:absolute;right:-1px;top:-3px;width:0;height:0;border-left:5px solid var(--color-border-secondary);border-top:3px solid transparent;border-bottom:3px solid transparent;"></div></div></div>`;
+}
+
+function render() {
+  const s = steps[idx];
+  document.getElementById('step-label').textContent = `Step ${idx+1} of ${steps.length}`;
+  document.getElementById('explain-box').innerHTML = s.msg;
+
+  const listsEl = document.getElementById('lists-panel');
+  listsEl.innerHTML = '';
+  for (let li=0;li<lists.length;li++) {
+    const ptr = s.ptrs[li];
+    let row = `<div style="display:flex;align-items:center;gap:3px;margin-bottom:8px;">
+      <span style="font-size:11px;color:${listColors[li].tc};font-weight:500;min-width:20px;">${listLabels[li]}</span>`;
+    if (ptr >= lists[li].length) {
+      row += `<span style="font-size:11px;color:var(--color-text-tertiary);">exhausted</span>`;
+    } else {
+      for (let ni=0;ni<lists[li].length;ni++) {
+        const isExtracted = s.extracted && s.extracted.val===lists[li][ni] && s.extracted.li===li && ni===ptr-1;
+        let state = 'waiting';
+        if (ni < ptr-1) state = 'merged';
+        if (isExtracted) state = 'extracted';
+        if (ni === ptr) state = 'heap';
+        if (ni > ptr) state = 'waiting';
+        row += nodeEl(lists[li][ni], li, state);
+        if (ni < lists[li].length-1) row += arrow();
+      }
+    }
+    row += '</div>';
+    listsEl.innerHTML += row;
+  }
+
+  const heapEl = document.getElementById('heap-panel');
+  if (s.heap.length === 0) {
+    heapEl.innerHTML = `<span style="font-size:12px;color:var(--color-text-tertiary);">empty</span>`;
+  } else {
+    heapEl.innerHTML = s.heap.map((h,i) =>
+      `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+        <span style="font-size:10px;color:${listColors[h.li].tc};">${listLabels[h.li]}</span>
+        ${nodeEl(h.val, h.li, 'heap')}
+        ${i===0?`<span style="font-size:10px;color:var(--color-text-tertiary);">min</span>`:''}
+      </div>`
+    ).join('');
+  }
+
+  document.getElementById('ptr-panel').innerHTML =
+    `<code style="font-size:12px;">head</code> = ${s.headVal !== null ? `node(${s.headVal})` : 'nullptr'}<br>
+     <code style="font-size:12px;">prev</code> = ${s.prevVal !== null ? `node(${s.prevVal})` : 'nullptr'}`;
+
+  const resEl = document.getElementById('result-panel');
+  if (s.result.length === 0) {
+    resEl.innerHTML = `<span style="font-size:12px;color:var(--color-text-tertiary);">empty — waiting for first extraction</span>`;
+  } else {
+    resEl.innerHTML = s.result.map((r,i) =>
+      `<div style="display:flex;align-items:center;">
+        ${nodeEl(r.val, r.li, 'merged')}
+        ${i < s.result.length-1 ? arrow() : ''}
+      </div>`
+    ).join('');
+  }
+}
+
+document.getElementById('prev-btn').addEventListener('click',()=>{idx=Math.max(0,idx-1);render();});
+document.getElementById('next-btn').addEventListener('click',()=>{idx=Math.min(steps.length-1,idx+1);render();});
+render();
+</script>
