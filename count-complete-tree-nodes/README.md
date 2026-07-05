@@ -44,20 +44,28 @@ If the left and right heights are equal, we can compute the node count in $O(1)$
 4. Otherwise, return `1 + countNodes(root->left) + countNodes(root->right)`.
 
 ```cpp
-int countNodes(TreeNode* root) {
-    if (!root) return 0;
-    
-    // Compute left-most and right-most heights
-    int leftHeight = getLeftHeight(root);
-    int rightHeight = getRightHeight(root);
-    
-    // Perfect binary tree optimization
-    if (leftHeight == rightHeight) {
-        return (1 << leftHeight) - 1;
+int getHeight(TreeNode* node) {
+    if(node == NULL) return 0;
+    TreeNode* leftNode = node;
+    int leftHeight = 0, rightHeight = 0;
+    while(leftNode != NULL) {
+        leftHeight++;
+        leftNode = leftNode->left;
     }
-    
-    // Recurse if heights differ
-    return 1 + countNodes(root->left) + countNodes(root->right);
+    TreeNode* rightNode = node;
+    while(rightNode != NULL) {
+        rightHeight++;
+        rightNode = rightNode->right;
+    }
+    if(leftHeight == rightHeight) {
+        // Can also use bitwise shift: (1 << leftHeight) - 1
+        return pow(2, leftHeight) - 1;
+    }
+    return 1 + getHeight(node->left) + getHeight(node->right);
+}
+
+int countNodes(TreeNode* root) {
+    return getHeight(root);
 }
 ```
 
