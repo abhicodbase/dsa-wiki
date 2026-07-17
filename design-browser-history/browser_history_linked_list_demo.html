@@ -1,0 +1,157 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--color-text-primary);font-size:14px}
+.browser-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px 12px 0 0;border-bottom:none}
+.browser-body{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:0 0 12px 12px;padding:16px}
+.url-bar{flex:1;padding:6px 10px;font-size:13px;font-family:var(--font-mono);border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)}
+.nav-btn{width:30px;height:30px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s}
+.nav-btn:hover:not(:disabled){background:var(--color-background-secondary)}
+.nav-btn:disabled{opacity:.35;cursor:default}
+.visit-row{display:flex;gap:8px;margin-bottom:14px}
+.visit-input{flex:1;padding:6px 10px;font-size:13px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)}
+.visit-btn{padding:6px 14px;font-size:13px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);cursor:pointer;transition:background .15s}
+.visit-btn:hover{background:var(--color-background-secondary)}
+.steps-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.step-btn{padding:5px 12px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;transition:background .15s}
+.step-btn:hover{background:var(--color-background-secondary)}
+.step-input{width:52px;padding:5px 8px;font-size:13px;text-align:center;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)}
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-tertiary);margin-bottom:8px}
+.node-chain{display:flex;align-items:center;gap:0;flex-wrap:wrap;gap:4px}
+.node{padding:7px 12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);font-size:13px;font-family:var(--font-mono);background:var(--color-background-secondary);color:var(--color-text-secondary);position:relative;transition:all .2s}
+.node.current{background:var(--color-background-info);border-color:var(--color-border-info);color:var(--color-text-info);font-weight:500}
+.node.fwd-dead{opacity:.35;text-decoration:line-through}
+.arrow{color:var(--color-text-tertiary);font-size:16px;padding:0 2px}
+.null-marker{font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-mono);padding:4px 6px}
+.log-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;max-height:120px;overflow-y:auto;font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary)}
+.log-entry{padding:2px 0;border-bottom:0.5px solid var(--color-border-tertiary);line-height:1.5}
+.log-entry:last-child{border-bottom:none}
+.log-visit{color:var(--color-text-primary)}
+.log-back{color:var(--color-text-info)}
+.log-fwd{color:var(--color-text-success)}
+.cur-badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;background:var(--color-background-info);color:var(--color-text-info);margin-left:6px;vertical-align:middle}
+</style>
+
+<h2 class="sr-only">Interactive demo of the BrowserHistory linked list solution — visit URLs, go back and forward to see how the doubly linked list updates</h2>
+
+<div style="padding:1rem 0">
+
+  <div class="browser-bar">
+    <button class="nav-btn" id="btn-back" onclick="doBack()" disabled aria-label="go back"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+    <button class="nav-btn" id="btn-fwd" onclick="doFwd()" disabled aria-label="go forward"><i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+    <div class="url-bar" id="url-bar">leetcode.com</div>
+  </div>
+  <div class="browser-body">
+
+    <div class="visit-row">
+      <input class="visit-input" id="visit-input" placeholder="enter url e.g. github.com" onkeydown="if(event.key==='Enter')doVisit()"/>
+      <button class="visit-btn" onclick="doVisit()"><i class="ti ti-world" aria-hidden="true" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>visit</button>
+    </div>
+
+    <div class="steps-row">
+      <button class="step-btn" onclick="doBackN()"><i class="ti ti-arrow-left" aria-hidden="true" style="font-size:13px;vertical-align:-1px"></i> back</button>
+      <input class="step-input" id="steps-input" type="number" value="1" min="1" max="10"/>
+      <button class="step-btn" onclick="doFwdN()">forward <i class="ti ti-arrow-right" aria-hidden="true" style="font-size:13px;vertical-align:-1px"></i></button>
+      <span style="font-size:12px;color:var(--color-text-tertiary);margin-left:4px">steps</span>
+    </div>
+
+    <div class="section-label">linked list state</div>
+    <div class="node-chain" id="node-chain" style="margin-bottom:16px"></div>
+
+    <div class="section-label" style="margin-top:12px">operation log</div>
+    <div class="log-box" id="log-box"></div>
+  </div>
+</div>
+
+<script>
+let history_list = [{url:'leetcode.com'}];
+let cur = 0;
+
+function getSteps() {
+  return Math.max(1, parseInt(document.getElementById('steps-input').value)||1);
+}
+
+function doVisit() {
+  const inp = document.getElementById('visit-input');
+  let url = inp.value.trim();
+  if (!url) return;
+  if (!url.includes('.')) url = url + '.com';
+  history_list = history_list.slice(0, cur+1);
+  history_list.push({url});
+  cur = history_list.length - 1;
+  inp.value = '';
+  log(`visit("${url}") → cut forward chain, append node`, 'visit');
+  render();
+}
+
+function doBackN() {
+  const steps = getSteps();
+  const prev = cur;
+  cur = Math.max(0, cur - steps);
+  const actual = prev - cur;
+  log(`back(${steps}) → moved ${actual} step${actual!==1?'s':''} → "${history_list[cur].url}"`, 'back');
+  render();
+}
+
+function doFwdN() {
+  const steps = getSteps();
+  const prev = cur;
+  cur = Math.min(history_list.length-1, cur + steps);
+  const actual = cur - prev;
+  log(`forward(${steps}) → moved ${actual} step${actual!==1?'s':''} → "${history_list[cur].url}"`, 'fwd');
+  render();
+}
+
+function doBack() { document.getElementById('steps-input').value=1; doBackN(); }
+function doFwd()  { document.getElementById('steps-input').value=1; doFwdN(); }
+
+function log(msg, type) {
+  const box = document.getElementById('log-box');
+  const d = document.createElement('div');
+  d.className = 'log-entry log-'+type;
+  d.textContent = msg;
+  box.insertBefore(d, box.firstChild);
+}
+
+function render() {
+  document.getElementById('url-bar').textContent = history_list[cur].url;
+  document.getElementById('btn-back').disabled = cur === 0;
+  document.getElementById('btn-fwd').disabled = cur === history_list.length-1;
+
+  const chain = document.getElementById('node-chain');
+  chain.innerHTML = '';
+
+  const nullL = document.createElement('span');
+  nullL.className = 'null-marker'; nullL.textContent = 'null';
+  chain.appendChild(nullL);
+
+  const a0 = document.createElement('span');
+  a0.className='arrow'; a0.textContent='←';
+  chain.appendChild(a0);
+
+  history_list.forEach((item, i) => {
+    const node = document.createElement('div');
+    node.className = 'node' + (i===cur?' current':'');
+    node.innerHTML = item.url + (i===cur?'<span class="cur-badge">current</span>':'');
+    chain.appendChild(node);
+
+    if (i < history_list.length-1) {
+      const arrow = document.createElement('span');
+      arrow.className='arrow';
+      arrow.textContent = '⟷';
+      chain.appendChild(arrow);
+    }
+  });
+
+  const a1 = document.createElement('span');
+  a1.className='arrow'; a1.textContent='→';
+  chain.appendChild(a1);
+
+  const nullR = document.createElement('span');
+  nullR.className='null-marker'; nullR.textContent='null';
+  chain.appendChild(nullR);
+}
+
+render();
+log('BrowserHistory("leetcode.com") → homepage node created', 'visit');
+</script>

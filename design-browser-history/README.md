@@ -146,12 +146,23 @@ In the initial implementation, several critical bugs were identified and resolve
 
 ---
 
+## Interactive Demo
+
+An interactive, step-by-step simulation of the doubly linked list behavior is included in this directory.
+
+- [Interactive Doubly Linked List Demo](./browser_history_linked_list_demo.html)
+
+You can open this HTML file in any browser to interactively test actions (`visit`, `back`, `forward`) and visually trace how the pointers change, how forward history is truncated/deleted, and how boundaries are clamped.
+
+---
+
 ## Files
 
 | File | Description |
 |---|---|
 | [`doubly-linked-list.cpp`](./doubly-linked-list.cpp) | Main C++ solution using a doubly linked list with full inline comments and memory leak cleanups. |
-| [`README.md`](./README.md) | Problem description, approach documentation, bug analysis, and complexity analysis. |
+| [`browser_history_linked_list_demo.html`](./browser_history_linked_list_demo.html) | Interactive HTML visualization of the browser history doubly linked list state. |
+| [`README.md`](./README.md) | Problem description, approach documentation, bug analysis, complexity analysis, and demo reference. |
 
 ---
 
