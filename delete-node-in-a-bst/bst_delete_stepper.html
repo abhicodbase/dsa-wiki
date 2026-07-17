@@ -1,5 +1,30 @@
-
 <style>
+:root {
+  --text-primary: var(--ink, #0f0e0c);
+  --text-secondary: var(--ink2, #3a3730);
+  --text-muted: var(--ink3, #7a7570);
+  
+  --surface-1: var(--paper, #f5f0e8);
+  --surface-2: var(--paper2, #ede8dc);
+  --border: var(--rule-light, rgba(15, 14, 12, 0.12));
+  --border-strong: var(--rule, #1a1816);
+  
+  --bg-danger: var(--danger-bg, #fee2e2);
+  --text-danger: var(--danger-text, #991b1b);
+  --border-danger: var(--danger-text, #991b1b);
+  
+  --bg-success: var(--success-bg, #eaf3de);
+  --text-success: var(--success-text, #276749);
+  --border-success: var(--success-text, #276749);
+  
+  --bg-accent: var(--warning-bg, #fef3c7);
+  --text-accent: var(--warning-text, #92400e);
+  --border-accent: var(--warning-text, #92400e);
+  
+  --font-sans: var(--font-playfair), 'Georgia', serif;
+  --font-mono: var(--mono), monospace;
+  --radius: 6px;
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-sans);color:var(--text-primary);font-size:14px}
 .dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
