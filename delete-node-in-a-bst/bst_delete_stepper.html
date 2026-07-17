@@ -1,0 +1,208 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--text-primary);font-size:14px}
+.dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border-strong);transition:background .2s}
+.dot.active{background:var(--text-primary)}
+.nav{display:flex;gap:10px;justify-content:center;margin-top:14px}
+button{font-size:13px;padding:6px 18px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:transparent;color:var(--text-primary);cursor:pointer}
+button:hover{background:var(--surface-1)}
+button:disabled{opacity:.35;cursor:default}
+.desc{font-size:13px;color:var(--text-secondary);line-height:1.6;padding:0 4px;margin-bottom:10px;min-height:44px}
+.card{background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:10px 14px}
+.mono{font-family:var(--font-mono);font-size:12px}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--radius);font-family:var(--font-mono)}
+.tag-del{background:var(--bg-danger);color:var(--text-danger)}
+.tag-suc{background:var(--bg-success);color:var(--text-success)}
+.tag-cur{background:var(--bg-accent);color:var(--text-accent)}
+.case-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.case-tab{padding:5px 12px;font-size:12px;border-radius:var(--radius);border:0.5px solid var(--border);cursor:pointer;background:transparent;color:var(--text-secondary)}
+.case-tab.active{border-color:var(--border-accent);color:var(--text-accent);background:var(--bg-accent)}
+</style>
+
+<h2 class="sr-only">Interactive step-by-step demo of BST delete for all three cases: leaf, one child, two children</h2>
+
+<div style="padding:1rem 0">
+  <div class="case-tabs">
+    <button class="case-tab active" onclick="loadCase(0,this)">Case 1 — leaf node</button>
+    <button class="case-tab" onclick="loadCase(1,this)">Case 2 — one child</button>
+    <button class="case-tab" onclick="loadCase(2,this)">Case 3 — two children</button>
+  </div>
+
+  <div class="dots" id="dots"></div>
+
+  <svg width="100%" viewBox="0 0 680 230" id="tree-svg" style="margin-bottom:10px">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+    <g id="edges"></g>
+    <g id="tree-nodes"></g>
+  </svg>
+
+  <div class="desc" id="desc"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:6px">current action</div>
+      <div id="action" class="mono" style="color:var(--text-primary)"></div>
+    </div>
+    <div class="card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:6px">code path</div>
+      <div id="code-line" class="mono" style="color:var(--text-secondary);line-height:1.7"></div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button id="prev-btn" onclick="go(-1)" disabled>← prev</button>
+    <button id="next-btn" onclick="go(1)">next →</button>
+  </div>
+</div>
+
+<script>
+const svgNS = 'http://www.w3.org/2000/svg';
+const R = 20;
+
+const CASES = [
+  {
+    title: 'Delete 2 (leaf)',
+    nodes: [
+      {id:'r', val:5, cx:340, cy:30},
+      {id:'L', val:3, cx:220, cy:110},
+      {id:'R', val:7, cx:460, cy:110},
+      {id:'LL',val:2, cx:150, cy:190},
+      {id:'LR',val:4, cx:290, cy:190},
+    ],
+    edges:[['r','L'],['r','R'],['L','LL'],['L','LR']],
+    steps:[
+      {active:'r', deleted:[], successor:[], desc:'Start at root (5). key=2 < 5 → go left.', action:'deleteNode(5, key=2)', code:'key < root->val\n→ root->left = deleteNode(left, key)'},
+      {active:'L', deleted:[], successor:[], desc:'At node 3. key=2 < 3 → go left.', action:'deleteNode(3, key=2)', code:'key < root->val\n→ root->left = deleteNode(left, key)'},
+      {active:'LL', deleted:[], successor:[], desc:'At node 2. key == val. No left child, no right child → this is a leaf.', action:'deleteNode(2, key=2)', code:'key == root->val\nno left, no right'},
+      {active:'LL', deleted:['LL'], successor:[], desc:'Case 1: leaf node. Return nullptr. Parent (3) will set its left pointer to null.', action:'return nullptr', code:'if (!root->left && !root->right)\n  return nullptr;'},
+      {active:'L', deleted:['LL'], successor:[], desc:'Back at node 3. Its left is now null. Tree is valid BST.', action:'3->left = nullptr', code:'root->left = deleteNode(...)\n// returned nullptr'},
+    ]
+  },
+  {
+    title: 'Delete 3 (one child)',
+    nodes: [
+      {id:'r', val:5, cx:340, cy:30},
+      {id:'L', val:3, cx:220, cy:110},
+      {id:'R', val:7, cx:460, cy:110},
+      {id:'LR',val:4, cx:290, cy:190},
+    ],
+    edges:[['r','L'],['r','R'],['L','LR']],
+    steps:[
+      {active:'r', deleted:[], successor:[], desc:'Start at root (5). key=3 < 5 → go left.', action:'deleteNode(5, key=3)', code:'key < root->val\n→ root->left = deleteNode(left, key)'},
+      {active:'L', deleted:[], successor:[], desc:'At node 3. key == val. Check children: no left child, but has right child (4).', action:'deleteNode(3, key=3)', code:'key == root->val\nno left child, has right'},
+      {active:'L', deleted:['L'], successor:['LR'], desc:'Case 2: one child. Return the right child (4) directly — it replaces node 3.', action:'return root->right  // node 4', code:'if (!root->left) return root->right;\nif (!root->right) return root->left;'},
+      {active:'r', deleted:['L'], successor:['LR'], desc:'Back at root (5). Its left pointer now points to 4. BST property preserved.', action:'5->left = node(4)', code:'root->left = deleteNode(...)\n// returned node 4'},
+    ]
+  },
+  {
+    title: 'Delete 5 (two children)',
+    nodes: [
+      {id:'r', val:5, cx:340, cy:30},
+      {id:'L', val:3, cx:200, cy:110},
+      {id:'R', val:7, cx:480, cy:110},
+      {id:'LL',val:2, cx:130, cy:190},
+      {id:'LR',val:4, cx:270, cy:190},
+      {id:'RL',val:6, cx:410, cy:190},
+      {id:'RR',val:8, cx:550, cy:190},
+    ],
+    edges:[['r','L'],['r','R'],['L','LL'],['L','LR'],['R','RL'],['R','RR']],
+    steps:[
+      {active:'r', deleted:[], successor:[], desc:'At root (5). key == val. Has both left and right children.', action:'deleteNode(5, key=5)', code:'key == root->val\nhas left and right child'},
+      {active:'RL', deleted:[], successor:['RL'], desc:'Case 3: two children. Find in-order successor = leftmost node in right subtree. That\'s node 6.', action:'successor = inorderMin(right) = 6', code:'TreeNode* s = root->right;\nwhile (s->left) s = s->left;'},
+      {active:'r', deleted:[], successor:['RL'], desc:'Copy successor\'s value (6) into the current node. Node is now "6" but still has the old right subtree.', action:'root->val = 6', code:'root->val = successor->val;'},
+      {active:'R', deleted:[], successor:['RL'], desc:'Now delete the successor (6) from the right subtree. It has no left child so it\'s a Case 2 delete.', action:'deleteNode(right, key=6)', code:'root->right = deleteNode(root->right, successor->val);'},
+      {active:'r', deleted:['RL'], successor:[], desc:'Done. Root is now 6, right subtree has 7→8 (6 removed). BST property holds: left < 6 < right.', action:'tree valid, root=6', code:'// BST restored\n// left subtree < 6 < right subtree'},
+    ]
+  }
+];
+
+let caseIdx = 0;
+let cur = 0;
+let steps = [];
+
+function loadCase(i, btn) {
+  caseIdx = i;
+  cur = 0;
+  steps = CASES[i].steps;
+  document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function go(d) { cur = Math.max(0, Math.min(steps.length-1, cur+d)); render(); }
+
+function nodeColor(id, step) {
+  if (step.deleted.includes(id)) return {fill:'var(--bg-danger)', stroke:'var(--border-danger)'};
+  if (step.successor.includes(id)) return {fill:'var(--bg-success)', stroke:'var(--border-success)'};
+  if (step.active === id) return {fill:'var(--bg-accent)', stroke:'var(--border-accent)'};
+  return {fill:'var(--surface-2)', stroke:'var(--border-strong)'};
+}
+
+function render() {
+  const c = CASES[caseIdx];
+  const s = steps[cur];
+
+  const eg = document.getElementById('edges');
+  const ng = document.getElementById('tree-nodes');
+  eg.innerHTML = ''; ng.innerHTML = '';
+
+  const nodeMap = {};
+  c.nodes.forEach(n => { nodeMap[n.id] = n; });
+
+  c.edges.forEach(([a, b]) => {
+    const na = nodeMap[a], nb = nodeMap[b];
+    if (!na || !nb) return;
+    const line = document.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', na.cx); line.setAttribute('y1', na.cy);
+    line.setAttribute('x2', nb.cx); line.setAttribute('y2', nb.cy);
+    line.setAttribute('stroke', 'var(--border-strong)'); line.setAttribute('stroke-width', '0.5');
+    eg.appendChild(line);
+  });
+
+  c.nodes.forEach(n => {
+    const {fill, stroke} = nodeColor(n.id, s);
+    const isDel = s.deleted.includes(n.id);
+    const g = document.createElementNS(svgNS, 'g');
+    const circ = document.createElementNS(svgNS, 'circle');
+    circ.setAttribute('cx', n.cx); circ.setAttribute('cy', n.cy); circ.setAttribute('r', R);
+    circ.setAttribute('fill', fill); circ.setAttribute('stroke', stroke); circ.setAttribute('stroke-width', '1');
+    if (isDel) circ.setAttribute('stroke-dasharray', '4 2');
+    g.appendChild(circ);
+    const txt = document.createElementNS(svgNS, 'text');
+    txt.setAttribute('x', n.cx); txt.setAttribute('y', n.cy);
+    txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'central');
+    txt.setAttribute('font-size', '14'); txt.setAttribute('font-weight', '500');
+    txt.setAttribute('fill', isDel ? 'var(--text-danger)' : s.successor.includes(n.id) ? 'var(--text-success)' : s.active === n.id ? 'var(--text-accent)' : 'var(--text-primary)');
+    txt.setAttribute('font-family', 'var(--font-sans)');
+    txt.setAttribute('text-decoration', isDel ? 'line-through' : 'none');
+    txt.textContent = n.val;
+    g.appendChild(txt);
+    ng.appendChild(g);
+  });
+
+  document.getElementById('desc').textContent = s.desc;
+  document.getElementById('action').textContent = s.action;
+  document.getElementById('code-line').textContent = s.code;
+
+  const dc = document.getElementById('dots');
+  dc.innerHTML = '';
+  steps.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === cur ? ' active' : '');
+    dc.appendChild(d);
+  });
+
+  document.getElementById('prev-btn').disabled = cur === 0;
+  const nb = document.getElementById('next-btn');
+  nb.disabled = cur === steps.length - 1;
+  nb.textContent = cur === steps.length - 1 ? 'done ✓' : 'next →';
+}
+
+loadCase(0, document.querySelector('.case-tab'));
+</script>
