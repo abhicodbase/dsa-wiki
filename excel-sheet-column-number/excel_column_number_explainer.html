@@ -1,0 +1,116 @@
+
+<h2 class="sr-only">Interactive step-through showing how Excel column title converts to a number using base-26 positional arithmetic</h2>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.wrap { padding: 1.25rem 0; font-family: var(--font-sans); }
+.input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
+.col-input { font-size: 20px; font-weight: 500; text-transform: uppercase; width: 120px; text-align: center; letter-spacing: 4px; }
+.formula-box { background: var(--surface-1); border: 0.5px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.formula-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.terms { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.term { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.term-char { font-size: 20px; font-weight: 500; color: var(--text-primary); padding: 6px 14px; border-radius: 8px; border: 0.5px solid var(--border-strong); background: var(--surface-2); min-width: 44px; text-align: center; transition: background 0.2s, border-color 0.2s; }
+.term-char.active { background: #EEEDFE; border-color: #AFA9EC; color: #3C3489; }
+.term-detail { font-size: 11px; color: var(--text-secondary); text-align: center; line-height: 1.4; }
+.term-value { font-size: 13px; font-weight: 500; color: #534AB7; }
+.op { font-size: 18px; color: var(--text-muted); padding-top: 12px; }
+.result-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.result-label { font-size: 13px; color: var(--text-secondary); }
+.result-val { font-size: 28px; font-weight: 500; color: var(--text-primary); }
+.step-section { margin-top: 1rem; }
+.step-header { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.steps { display: flex; flex-direction: column; gap: 6px; }
+.step { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--surface-1); font-size: 13px; color: var(--text-secondary); transition: all 0.2s; cursor: pointer; }
+.step:hover { border-color: var(--border-strong); }
+.step.lit { background: #EEEDFE; border-color: #AFA9EC; color: #3C3489; }
+.step-char { font-weight: 500; width: 22px; text-align: center; font-size: 16px; }
+.step-arrow { color: var(--text-muted); }
+.step-math { flex: 1; font-family: var(--font-mono); font-size: 12px; }
+.step-ans { font-weight: 500; min-width: 36px; text-align: right; }
+.err { color: var(--text-danger); font-size: 13px; margin-top: 6px; display: none; }
+.info { font-size: 12px; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+</style>
+
+<div class="wrap">
+  <div class="input-row">
+    <input class="col-input" id="ci" type="text" value="CAB" maxlength="5" placeholder="ABC" />
+    <div style="font-size:13px; color:var(--text-secondary)">← try any column</div>
+  </div>
+  <div id="err" class="err">Only A–Z letters allowed.</div>
+
+  <div class="formula-box">
+    <div class="formula-label">Positional breakdown — base 26 where A=1, B=2 … Z=26</div>
+    <div class="terms" id="terms"></div>
+    <div class="result-row">
+      <div class="result-label">= </div>
+      <div class="result-val" id="result">—</div>
+    </div>
+  </div>
+
+  <div class="step-section">
+    <div class="step-header">Step-by-step (click any row to highlight the term above)</div>
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <div class="info">
+    Your code uses <code>pow(26, len-i-1)</code> for the place value — exactly how base-10 works, but base-26 with digits 1–26 instead of 0–9. The last character always has place value 26⁰ = 1, so the <code>if (i != len-1)</code> branch is just an optimisation to skip <code>pow(26,0)</code>.
+  </div>
+</div>
+
+<script>
+const ci = document.getElementById('ci');
+const termsEl = document.getElementById('terms');
+const stepsEl = document.getElementById('steps');
+const resultEl = document.getElementById('result');
+const errEl = document.getElementById('err');
+
+function charVal(c) { return c.toUpperCase().charCodeAt(0) - 64; }
+
+function render(raw) {
+  const s = raw.toUpperCase().replace(/[^A-Z]/g, '');
+  errEl.style.display = raw.length && raw !== s ? 'block' : 'none';
+  if (!s) { termsEl.innerHTML = ''; stepsEl.innerHTML = ''; resultEl.textContent = '—'; return; }
+
+  const n = s.length;
+  let total = 0;
+  const parts = [];
+  for (let i = 0; i < n; i++) {
+    const place = n - i - 1;
+    const cv = charVal(s[i]);
+    const pv = Math.pow(26, place);
+    const contribution = cv * pv;
+    total += contribution;
+    parts.push({ char: s[i], cv, place, pv, contribution });
+  }
+
+  // formula terms
+  termsEl.innerHTML = parts.map((p, i) => `
+    <div class="term" id="term-${i}">
+      <div class="term-char" id="tc-${i}">${p.char}</div>
+      <div class="term-detail">${p.cv} × 26<sup>${p.place}</sup></div>
+      <div class="term-value">= ${p.contribution}</div>
+    </div>
+    ${i < parts.length - 1 ? '<span class="op">+</span>' : ''}
+  `).join('');
+
+  resultEl.textContent = total;
+
+  // steps
+  stepsEl.innerHTML = parts.map((p, i) => `
+    <div class="step" id="step-${i}" onclick="highlight(${i})">
+      <span class="step-char">${p.char}</span>
+      <span class="step-arrow">→</span>
+      <span class="step-math">('${p.char}'−'A'+1) × 26<sup>${p.place}</sup> = ${p.cv} × ${p.pv}</span>
+      <span class="step-ans">= ${p.contribution}</span>
+    </div>
+  `).join('');
+}
+
+function highlight(idx) {
+  document.querySelectorAll('.step').forEach((el,i) => el.classList.toggle('lit', i===idx));
+  document.querySelectorAll('[id^="tc-"]').forEach((el,i) => el.classList.toggle('active', i===idx));
+}
+
+ci.addEventListener('input', e => render(e.target.value));
+render(ci.value);
+</script>
