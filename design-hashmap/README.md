@@ -51,7 +51,8 @@ To handle dynamic or arbitrary key ranges without allocating $10^6$ slots upfron
 
 | File | Description |
 | :--- | :--- |
-| [`direct_addressing.cpp`](./direct_addressing.cpp) | $O(1)$ direct array lookup implementation |
+| [`vector_direct.cpp`](./vector_direct.cpp) | Direct vector allocation with push_back constructor initialization |
+| [`direct_addressing.cpp`](./direct_addressing.cpp) | $O(1)$ direct array lookup with constructor initializer list |
 | [`chaining.cpp`](./chaining.cpp) | Separate chaining hash table implementation |
 
 ---
