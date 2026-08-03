@@ -11,7 +11,8 @@
 
 | Approach | Time Complexity | Space Complexity | Description |
 | :--- | :--- | :--- | :--- |
-| **Merge Sort (Optimal)** | $O(N \log N)$ | $O(N)$ | Divide-and-conquer using auxiliary scratch vector. Stable and guaranteed $O(N \log N)$ performance. |
+| **Merge Sort (Single Scratch Buffer)** | $O(N \log N)$ | $O(N)$ | Divide-and-conquer using a single auxiliary scratch vector. Stable and guaranteed $O(N \log N)$ performance. |
+| **Merge Sort (Sub-vectors)** | $O(N \log N)$ | $O(N \log N)$ | Recursive creation of left/right sub-vectors at each level. Simple & intuitive, but higher allocation overhead. |
 | **QuickSort (Lomuto Partition)** | $O(N \log N)$ avg, $O(N^2)$ worst | $O(\log N)$ stack avg, $O(N)$ worst | In-place partition. Deterministic end pivot can hit $O(N^2)$ on sorted arrays. |
 
 ---
@@ -70,7 +71,8 @@ QuickSort selects a pivot element and partitions the array such that all element
 
 | File | Description |
 | :--- | :--- |
-| [`merge_sort.cpp`](./merge_sort.cpp) | Guaranteed $O(N \log N)$ Merge Sort implementation |
+| [`merge_sort.cpp`](./merge_sort.cpp) | Guaranteed $O(N \log N)$ Merge Sort implementation with a single auxiliary buffer |
+| [`merge_sort_out_of_place.cpp`](./merge_sort_out_of_place.cpp) | Functional Merge Sort implementation creating left/right sub-vectors |
 | [`quick_sort.cpp`](./quick_sort.cpp) | QuickSort implementation using Lomuto partition |
 | [`merge_sort_divide_conquer.png`](./merge_sort_divide_conquer.png) | Visual diagram showing the divide-and-conquer execution tree |
 | [`lomuto_partition_swap_steps.html`](./lomuto_partition_swap_steps.html) | Interactive step-by-step visualizer for Lomuto partition swaps |
