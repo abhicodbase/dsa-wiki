@@ -1,0 +1,72 @@
+<div>
+<h2 class="sr-only">Step-through of Lomuto partition swap logic on the array 1,2,5,9,3</h2>
+
+<div id="arr" style="display:flex;gap:8px;justify-content:center;margin:1.5rem 0 2.5rem;"></div>
+
+<div style="min-height:70px;text-align:center;margin-bottom:1.5rem;">
+  <p id="desc" style="font-size:14px;color:var(--text-secondary);margin:0;"></p>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:center;gap:16px;">
+  <button id="prev">Previous</button>
+  <span id="counter" style="font-size:13px;color:var(--text-muted);min-width:60px;text-align:center;"></span>
+  <button id="next">Next</button>
+</div>
+</div>
+
+<script>
+const steps = [
+  { arr:[1,2,5,9,3], i:null, left:0, desc:"Start. pivot = nums[end] = 3. left = start = 0." },
+  { arr:[1,2,5,9,3], i:0, left:0, desc:"i=0: nums[0]=1. 1 < 3? Yes → swap(nums[0], nums[left=0])." },
+  { arr:[1,2,5,9,3], i:0, left:1, desc:"i and left were the same index, so the 'swap' is a no-op — but left++ still happens → left=1." },
+  { arr:[1,2,5,9,3], i:1, left:1, desc:"i=1: nums[1]=2. 2 < 3? Yes → swap(nums[1], nums[left=1])." },
+  { arr:[1,2,5,9,3], i:1, left:2, desc:"Again i equals left, so no visible change — but left++ → left=2." },
+  { arr:[1,2,5,9,3], i:2, left:2, desc:"i=2: nums[2]=5. 5 < 3? No. Skip, left stays at 2." },
+  { arr:[1,2,5,9,3], i:3, left:2, desc:"i=3: nums[3]=9. 9 < 3? No. Skip. Loop ends (i reached end-1)." },
+  { arr:[1,2,5,9,3], i:null, left:2, desc:"Loop done. Now swap(nums[left=2], nums[end=4]) to drop the pivot into place." },
+  { arr:[1,2,3,9,5], i:null, left:2, desc:"Final: swapped 5 and 3. Pivot 3 sits at index 2. Left (1,2) < 3. Right (9,5) ≥ 3. Recurse on [0,1] and [3,4]." }
+];
+
+let idx = 0;
+const arrEl = document.getElementById('arr');
+const descEl = document.getElementById('desc');
+const counterEl = document.getElementById('counter');
+
+function render() {
+  const s = steps[idx];
+  arrEl.innerHTML = '';
+  s.arr.forEach((val, pos) => {
+    const isPivot = idx === steps.length - 1 && pos === 2;
+    const isLeft = pos === s.left;
+    const isI = pos === s.i;
+    const box = document.createElement('div');
+    box.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;';
+
+    const cell = document.createElement('div');
+    cell.textContent = val;
+    let bg = 'var(--surface-1)', border = 'var(--border)', color = 'var(--text-primary)';
+    if (isPivot) { bg = 'var(--bg-accent)'; border = 'var(--border-accent)'; color = 'var(--text-accent)'; }
+    else if (isI && isLeft) { bg = 'var(--bg-warning)'; border = 'var(--border-warning)'; color = 'var(--text-warning)'; }
+    else if (isI) { bg = 'var(--bg-danger)'; border = 'var(--border-danger)'; color = 'var(--text-danger)'; }
+    else if (isLeft) { bg = 'var(--bg-success)'; border = 'var(--border-success)'; color = 'var(--text-success)'; }
+    cell.style.cssText = `width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;border-radius:var(--radius);background:${bg};border:1px solid ${border};color:${color};`;
+    box.appendChild(cell);
+
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:11px;color:var(--text-muted);height:14px;';
+    let tags = [];
+    if (isI) tags.push('i');
+    if (isLeft) tags.push('left');
+    label.textContent = tags.join(' / ');
+    box.appendChild(label);
+
+    arrEl.appendChild(box);
+  });
+  descEl.textContent = s.desc;
+  counterEl.textContent = (idx+1) + ' / ' + steps.length;
+}
+
+document.getElementById('next').onclick = () => { idx = Math.min(idx+1, steps.length-1); render(); };
+document.getElementById('prev').onclick = () => { idx = Math.max(idx-1, 0); render(); };
+render();
+</script>
